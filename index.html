@@ -23,7 +23,7 @@
             justify-content: center;
             align-items: center;
             min-height: 100vh;
-            background-color: #0a0a0c;
+            background-color: #08080a;
             color: #e2e8f0;
             position: relative;
             overflow-x: hidden;
@@ -36,15 +36,15 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background-image: url('budynek.jpg');
+            background-image: url('assets/budynek.jpg');
             background-size: cover;
             background-position: center;
             background-repeat: no-repeat;
-            filter: blur(12px) brightness(0.4);
+            filter: blur(14px) brightness(0.35);
             transform: scale(1.05);
             z-index: 1;
             pointer-events: none;
-            transition: filter 1s ease, transform 1s ease;
+            transition: filter 1.2s cubic-bezier(0.16, 1, 0.3, 1), transform 1.2s cubic-bezier(0.16, 1, 0.3, 1);
         }
 
         /* Klasa zdejmująca blur po akceptacji */
@@ -53,33 +53,34 @@
             transform: scale(1.0) !important;
         }
 
-        /* Glitch / HUD stylistyka */
+        /* HUD Badges */
         .badge {
             display: inline-block;
             padding: 4px 10px;
             font-family: 'Share Tech Mono', monospace;
-            font-size: 12px;
+            font-size: 11px;
             text-transform: uppercase;
             letter-spacing: 1px;
             border-radius: 4px;
-            margin: 4px;
+            margin: 3px;
         }
         .badge-green { background: rgba(46, 204, 113, 0.2); color: #2ecc71; border: 1px solid #2ecc71; }
         .badge-orange { background: rgba(230, 126, 34, 0.2); color: #e67e22; border: 1px solid #e67e22; }
         .badge-red { background: rgba(231, 76, 60, 0.2); color: #e74c3c; border: 1px solid #e74c3c; }
+        .badge-blue { background: rgba(56, 189, 248, 0.2); color: #38bdf8; border: 1px solid #38bdf8; }
 
-        /* Główne okna */
+        /* Główne kontenery */
         .main-content, .error-content {
             display: none;
-            background: rgba(15, 23, 42, 0.88);
-            backdrop-filter: blur(16px);
-            -webkit-backdrop-filter: blur(16px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            padding: 35px;
+            background: rgba(13, 19, 32, 0.92);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            padding: 40px;
             border-radius: 16px;
-            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.8), 0 0 20px rgba(46, 204, 113, 0.1);
-            max-width: 850px;
-            width: 92%;
+            box-shadow: 0 25px 60px rgba(0, 0, 0, 0.85), 0 0 30px rgba(46, 204, 113, 0.12);
+            max-width: 950px;
+            width: 94%;
             margin: 40px auto;
             z-index: 10;
             position: relative;
@@ -87,49 +88,54 @@
         }
 
         @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(20px); }
+            from { opacity: 0; transform: translateY(25px); }
             to { opacity: 1; transform: translateY(0); }
         }
 
         h1 {
-            font-size: 2.2rem;
+            font-size: 2.3rem;
             font-weight: 700;
             color: #f8fafc;
             letter-spacing: 1.5px;
             margin-top: 0;
             margin-bottom: 5px;
             text-transform: uppercase;
-            text-shadow: 0 2px 10px rgba(0,0,0,0.7);
+            text-shadow: 0 2px 10px rgba(0,0,0,0.8);
         }
 
         .subtitle {
             font-family: 'Share Tech Mono', monospace;
             color: #2ecc71;
             font-size: 0.95rem;
-            margin-bottom: 20px;
+            margin-bottom: 25px;
             letter-spacing: 1px;
         }
 
         h2 {
-            font-size: 1.4rem;
+            font-size: 1.45rem;
             color: #38bdf8;
-            border-bottom: 1px solid rgba(56, 189, 248, 0.2);
+            border-bottom: 1px solid rgba(56, 189, 248, 0.25);
             padding-bottom: 8px;
-            margin-top: 25px;
+            margin-top: 35px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
         }
 
         p {
             color: #cbd5e1;
-            line-height: 1.7;
+            line-height: 1.75;
             font-size: 1.05rem;
         }
 
-        /* Nakładka okna modalnego */
+        /* Nakładka okna modalnego zgody */
         .overlay {
             position: fixed;
             top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(5, 5, 8, 0.85);
-            backdrop-filter: blur(8px);
+            background: rgba(4, 6, 12, 0.88);
+            backdrop-filter: blur(10px);
             display: flex;
             justify-content: center;
             align-items: center;
@@ -139,14 +145,14 @@
         }
 
         .modal {
-            background: rgba(15, 23, 42, 0.95);
-            border: 1px solid rgba(46, 204, 113, 0.3);
+            background: rgba(13, 19, 32, 0.96);
+            border: 1px solid rgba(46, 204, 113, 0.35);
             padding: 35px;
             border-radius: 16px;
             max-width: 550px;
             width: 100%;
             text-align: center;
-            box-shadow: 0 0 40px rgba(0,0,0,0.9), 0 0 15px rgba(46, 204, 113, 0.2);
+            box-shadow: 0 0 50px rgba(0,0,0,0.95), 0 0 20px rgba(46, 204, 113, 0.2);
             position: relative;
             z-index: 1001;
         }
@@ -158,6 +164,7 @@
             letter-spacing: 1px;
             margin-top: 0;
             border-bottom: none;
+            justify-content: center;
         }
 
         .btn {
@@ -183,9 +190,9 @@
 
         .btn:active { transform: translateY(0); }
         .btn-accept { background: #2ecc71; color: #0a0a0c; }
-        .btn-accept:hover { background: #27ae60; color: #fff; box-shadow: 0 0 15px rgba(46, 204, 113, 0.4); }
+        .btn-accept:hover { background: #27ae60; color: #fff; box-shadow: 0 0 20px rgba(46, 204, 113, 0.5); }
         .btn-decline { background: #e74c3c; color: white; }
-        .btn-decline:hover { background: #c0392b; box-shadow: 0 0 15px rgba(231, 76, 60, 0.4); }
+        .btn-decline:hover { background: #c0392b; box-shadow: 0 0 20px rgba(231, 76, 60, 0.5); }
         .btn-back { background: #38bdf8; color: #0f172a; }
         .btn-back:hover { background: #0284c7; color: white; }
 
@@ -198,7 +205,7 @@
             overflow-y: auto;
             font-size: 12px;
             font-family: 'Share Tech Mono', monospace;
-            background: rgba(0, 0, 0, 0.4);
+            background: rgba(0, 0, 0, 0.45);
             border-radius: 6px;
             color: #94a3b8;
         }
@@ -210,62 +217,50 @@
             color: #cbd5e1;
         }
 
-        /* Sekcja ze zdjęciami w serwisie */
-        .photo-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 15px;
-            margin-top: 20px;
-        }
-
-        .photo-card {
-            background: rgba(0, 0, 0, 0.5);
-            border: 1px solid rgba(255, 255, 255, 0.1);
+        /* Sekcje informacji i niebezpieczeństw */
+        .info-card {
+            background: rgba(0, 0, 0, 0.4);
+            border: 1px solid rgba(255, 255, 255, 0.08);
             border-radius: 10px;
-            overflow: hidden;
-            transition: transform 0.3s ease, border-color 0.3s ease;
+            padding: 20px;
+            margin-bottom: 20px;
         }
 
-        .photo-card:hover {
-            transform: scale(1.02);
-            border-color: #2ecc71;
-        }
-
-        .photo-card img {
-            width: 100%;
-            height: 200px;
-            object-fit: cover;
-            display: block;
-        }
-
-        .photo-card .caption {
-            padding: 12px;
-            font-size: 0.9rem;
-            color: #94a3b8;
-            font-family: 'Share Tech Mono', monospace;
-        }
-
-        .discord-link-box {
-            background: rgba(88, 101, 242, 0.15);
-            border: 1px solid rgba(88, 101, 242, 0.4);
-            padding: 12px;
+        .danger-card {
+            background: rgba(231, 76, 60, 0.08);
+            border-left: 4px solid #e74c3c;
             border-radius: 8px;
-            margin-top: 15px;
-            font-family: 'Share Tech Mono', monospace;
-            font-size: 0.85rem;
-            color: #a5b4fc;
+            padding: 18px 22px;
+            margin: 15px 0;
         }
 
-        .discord-link-box a {
+        .danger-card h3 {
+            color: #ef4444;
+            margin-top: 0;
+            font-size: 1.15rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .fact-card {
+            background: rgba(56, 189, 248, 0.08);
+            border-left: 4px solid #38bdf8;
+            border-radius: 8px;
+            padding: 18px 22px;
+            margin: 15px 0;
+        }
+
+        .fact-card h3 {
             color: #38bdf8;
-            text-decoration: none;
-            word-break: break-all;
-        }
-        .discord-link-box a:hover {
-            text-decoration: underline;
+            margin-top: 0;
+            font-size: 1.15rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
         }
 
-        /* Lista urbexowych cech */
+        /* Specyfikator siatki */
         .specs-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
@@ -274,10 +269,10 @@
         }
 
         .spec-box {
-            background: rgba(0, 0, 0, 0.4);
+            background: rgba(0, 0, 0, 0.5);
             border-left: 3px solid #2ecc71;
-            padding: 10px 15px;
-            border-radius: 4px;
+            padding: 12px 16px;
+            border-radius: 6px;
         }
 
         .spec-box .title {
@@ -288,9 +283,122 @@
         }
 
         .spec-box .value {
-            font-size: 1.1rem;
+            font-size: 1.15rem;
             font-weight: 700;
             color: #f1f5f9;
+        }
+
+        /* Siatka galerii mediów */
+        .media-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+            gap: 16px;
+            margin-top: 20px;
+        }
+
+        .media-card {
+            background: rgba(0, 0, 0, 0.55);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            overflow: hidden;
+            transition: transform 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+            position: relative;
+            cursor: pointer;
+        }
+
+        .media-card:hover {
+            transform: translateY(-4px);
+            border-color: #2ecc71;
+            box-shadow: 0 10px 25px rgba(46, 204, 113, 0.2);
+        }
+
+        .media-card img {
+            width: 100%;
+            height: 210px;
+            object-fit: cover;
+            display: block;
+            transition: transform 0.4s ease;
+        }
+
+        .media-card:hover img {
+            transform: scale(1.04);
+        }
+
+        .media-card video {
+            width: 100%;
+            height: 210px;
+            object-fit: cover;
+            background: #000;
+            display: block;
+        }
+
+        .media-card .caption {
+            padding: 10px 14px;
+            font-size: 0.85rem;
+            color: #94a3b8;
+            font-family: 'Share Tech Mono', monospace;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        /* Lightbox modal powiększenia zdjęcia */
+        .lightbox-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.92);
+            backdrop-filter: blur(12px);
+            z-index: 2000;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .lightbox-overlay img {
+            max-width: 90vw;
+            max-height: 85vh;
+            border-radius: 10px;
+            border: 2px solid rgba(46, 204, 113, 0.5);
+            box-shadow: 0 0 50px rgba(0, 0, 0, 0.9);
+        }
+
+        .lightbox-close {
+            position: absolute;
+            top: 25px;
+            right: 30px;
+            color: #fff;
+            font-size: 2.2rem;
+            cursor: pointer;
+            font-family: Arial, sans-serif;
+            transition: color 0.2s;
+        }
+        .lightbox-close:hover { color: #e74c3c; }
+
+        /* Przełączniki kategorii galerii */
+        .gallery-tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+        }
+
+        .tab-btn {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            color: #94a3b8;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 0.9rem;
+            transition: all 0.2s ease;
+        }
+
+        .tab-btn.active, .tab-btn:hover {
+            background: rgba(46, 204, 113, 0.15);
+            border-color: #2ecc71;
+            color: #2ecc71;
         }
     </style>
 </head>
@@ -299,11 +407,11 @@
     <!-- Warstwa tła -->
     <div id="bgLayer" class="background-blur"></div>
 
-    <!-- 1. OKNO POPUP -->
+    <!-- 1. OKNO POPUP ZGODY -->
     <div id="privacyOverlay" class="overlay">
         <div class="modal">
             <div class="badge badge-green">SYSTEM ANALITYKI URBEX</div>
-            <h2>Polityka Prywatności i Regulamin</h2>
+            <h2>Polityka Prywatności i Weryfikacja</h2>
             <p>Ta strona rejestruje parametry techniczne połączenia (w tym adres IP oraz przybliżoną lokalizację) w celach analitycznych oraz ochrony serwisu eksploracyjnego.</p>
             <p>Czy wyrażasz zgodę na warunki użytkowania serwisu i przetwarzanie tych danych?</p>
             
@@ -323,7 +431,7 @@
     <div id="errorScreen" class="error-content" style="text-align: center;">
         <div class="badge badge-red">ACCESS DENIED</div>
         <h1 style="color: #e74c3c; margin-top: 10px;">Dostęp Zablokowany</h1>
-        <p>Akwizycja danych została odrzucona. Musisz zaakceptować regulamin serwisu, aby odblokować dostęp do dokumentacji i zdjęć obiektu.</p>
+        <p>Akwizycja danych została odrzucona. Musisz zaakceptować regulamin serwisu, aby odblokować dostęp do dokumentacji, raportów i galerii zdjęć obiektu.</p>
         <button class="btn btn-back" onclick="showPrivacyNote()">Powrót do weryfikacji</button>
         
         <div class="privacy-policy-en" style="margin-top: 20px;">
@@ -336,21 +444,17 @@
     <div id="mainPage" class="main-content">
         <div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center;">
             <div>
-                <span class="badge badge-green">STATUS: ODKRYTE</span>
+                <span class="badge badge-green">STATUS: ZEKSPEROWANE</span>
                 <span class="badge badge-orange">KATEGORIA: INDUSTRIALNE</span>
-                <span class="badge badge-red">ZAGROŻENIE: POTŁUCZONE SZKŁO</span>
+                <span class="badge badge-red">ZAGROŻENIE: PSY / OCHRONA / WOJSKO</span>
             </div>
             <div style="font-family: 'Share Tech Mono', monospace; font-size: 12px; color: #64748b;">
-                LOC: 52.2100° N, 20.8890° E
+                GPS: 52.2100° N, 20.8890° E
             </div>
         </div>
 
         <h1 style="margin-top: 15px;">Opuszczony Zakład Przemysłowy</h1>
-        <div class="subtitle">// ARCHIWUM URBEX WARSZAWA — URSUS / CHROŚCICKIEGO</div>
-
-        <p>
-            Teren obejmuje ogromne powojenne hale przemysłowe oraz budynki produkcyjno-warsztatowe w Warszawie. Obiekt charakteryzuje się unikalnym klimatem post-apokaliptycznym: surowe betonowe konstrukcje, rdzewiejące instalacje przemysłowe, ślady po ćwiczeniach taktycznych oraz imponująca przestrzeń hal produkcyjnych.
-        </p>
+        <div class="subtitle">// ARCHIWUM URBEX WARSZAWA — ZAKŁADY INDUSTRIALNE (ODOLANY / URSUS)</div>
 
         <!-- Specyfikacja obiektu -->
         <div class="specs-grid">
@@ -360,7 +464,7 @@
             </div>
             <div class="spec-box">
                 <div class="title">Dostępność</div>
-                <div class="value">Łatwa (Włom/Płot)</div>
+                <div class="value">Dziura w płocie / Skatepark</div>
             </div>
             <div class="spec-box">
                 <div class="title">Atrakcyjność</div>
@@ -368,41 +472,218 @@
             </div>
             <div class="spec-box">
                 <div class="title">Stan Zachowania</div>
-                <div class="value">Ruina / Artefakty</div>
+                <div class="value">Hale / Bunkier / Artefakty</div>
             </div>
         </div>
 
-        <h2>Raport z Eksploracji & Cechy Obiektu</h2>
-        <ul style="color: #cbd5e1; line-height: 1.8; padding-left: 20px;">
-            <li><strong>Główna Hala:</strong> Ogromna przestrzeń produkcyjna ze strzelistymi skylightami tworzącymi efektowne snopy światła.</li>
-            <li><strong>Wyjście na Dach:</strong> Z dachów najwyższych budynków rozciąga się panorama całego kompleksu oraz sąsiadujących terenów industrialnych.</li>
-            <li><strong>Ślady Wojskowe:</strong> Na terenie widoczne są resztki tarcz strzeleckich, łuski amunicyjne oraz ślady po ładunkach hukowych wykorzystywanych podczas ćwiczeń taktycznych.</li>
-            <li><strong>Wejście:</strong> Najpopularniejsza ścieżka prowadzi od ulicy Chrościckiego przy skateparku lub od strony ul. Cykady.</li>
-            <li><strong>Zasada Eksploratora:</strong> <em>"Take only pictures, leave only footprints."</em></li>
-        </ul>
+        <!-- O MIEJSCU -->
+        <h2>🏛️ Opis Miejsca (Desolate.zone Place #2773)</h2>
+        <div class="info-card">
+            <p style="margin-top:0;">
+                Kompleks reprezentuje masywne powojenne hale przemysłowe oraz budynki produkcyjno-warsztatowe zlokalizowane na obrzeżach Warszawskich Odolan i Ursusa. Przeznaczenie obiektu związane było najprawdopodobniej z przemysłem maszynowo-metalowym lub ciężką produkcją maszyn rolniczych i pojazdów URSUS.
+            </p>
+            <p style="margin-bottom:0;">
+                Teren charakteryzuje się rozległymi, pustymi halami produkcyjnymi ze strzelistymi skylightami na dachu, przez które wpada naturalne światło, tworząc unikalny, post-apokaliptyczny klimat. Wewnątrz zachowały się liczne korytarze, dawne biura administracyjne, warsztaty oraz infrastruktura elektro-maszynowa. Miejsce jest cenionym punktem eksploracji urbexowej oraz spotkań społeczności ASG.
+            </p>
+        </div>
 
-        <h2>Fotografie z Eksploracji</h2>
-        <p>Poniżej znajduje się oficjalne zdjęcie z dokumentacji terenowej obiektu:</p>
+        <!-- INTERESUJĄCE FAKTY -->
+        <h2>💡 Interesujące Fakty</h2>
+        <div class="fact-card">
+            <h3>💥 Wojskowy Poligon Taktyczny & Łuski Amunicyjne</h3>
+            <p style="margin: 5px 0 0 0;">
+                Teren jest sporadycznie wykorzystywany przez jednostki wojskowe oraz służby do prowadzenia manewrów taktycznych i ćwiczeń bojowych. Podczas eksploracji można natrafić na resztki papierowych tarcz strzeleckich, zużyte łuski amunicji ćwiczebnej, zawleczki po granatach hukowych oraz wyraźne wyłomy i wyrwy po detonacjach ładunków wybuchowych w betonowych ścianach.
+            </p>
+        </div>
 
-        <div class="photo-grid">
-            <!-- Główne zdjęcie z repozytorium -->
-            <div class="photo-card" style="grid-column: 1 / -1;">
-                <img src="budynek.jpg" alt="Opuszczony Zakład Przemysłowy" style="height: 380px;">
+        <div class="fact-card">
+            <h3>🛡️ Schron / Bunkier przy Bramie Głównej</h3>
+            <p style="margin: 5px 0 0 0;">
+                Tuż przy wjeździe i budce stróża znajduje się zachowany podziemny schron z betonowymi szczelinami obserwacyjnymi. Miał on służyć jako punkt osłony i obserwacji terenu w okresie PRL-u.
+            </p>
+        </div>
+
+        <div class="fact-card">
+            <h3>🌆 Industrialna Panorama z Dachu</h3>
+            <p style="margin: 5px 0 0 0;">
+                Dachy najwyższych hal zapewniają panoramiczny widok na całe Odolany, linie kolejowe oraz industrialne zaplecze stolicy. Dostanie się na dachy wymaga jednak ostrożności ze względu na stan konstrukcji metalowych.
+            </p>
+        </div>
+
+        <!-- NIEBEZPIECZEŃSTWA -->
+        <h2>⚠️ Niebezpieczeństwa & Ostrzeżenia Eksploracyjne</h2>
+        
+        <div class="danger-card">
+            <h3>🐕 Reagująca Ochrona & Psy Ochronne</h3>
+            <p style="margin: 5px 0 0 0;">
+                W okolicy głównej bramy wjazdowej znajduje się aktywna budka z ochroną. Nastawienie strażników bywa zmienne – od obojętnego po agresywne interwencje z użyciem psów służbowych. Zaleca się wchodzenie na teren wyłomami w ogrodzeniu od strony skateparku (ul. Chrościckiego) z zachowaniem pełnej dyskrecji.
+            </p>
+        </div>
+
+        <div class="danger-card">
+            <h3>🪟 Rozbite Szkło Dachowe & Gruz</h3>
+            <p style="margin: 5px 0 0 0;">
+                Konstrukcja skylightów dachowych w wielu miejscach uległa zawaleniu. Posadzki hal są pokryte tysiącami ostrych odłamków szyb oraz potłuczonym szkłem. Obowiązkowe jest używanie obuwia z grubą podeszwą.
+            </p>
+        </div>
+
+        <div class="danger-card">
+            <h3>🕳️ Nieoznakowane Szyby Liftowe & Kanały Kablowe</h3>
+            <p style="margin: 5px 0 0 0;">
+                W mroczniejszych częściach budynków administracyjnych oraz na piętrach znajdują się otwarte, niezabezpieczone szyby wind oraz głębokie kanały instalacyjne w posadzkach. Wymagane jest używanie latarek o dużej mocy.
+            </p>
+        </div>
+
+        <div class="danger-card">
+            <h3>🎖️ Przypadkowe Manewry Wojska z Bronią</h3>
+            <p style="margin: 5px 0 0 0;">
+                Ze względu na nieoficjalne ćwiczenia wojskowe, w przypadku usłyszenia strzałów, odgłosów wybuchów lub zauważenia uzbrojonych patroli należy niezwłocznie i spokojnie opuścić teren obiektu.
+            </p>
+        </div>
+
+        <!-- DOKUMENTACJA FOTOGRAFICZNA I WIDEO -->
+        <h2>📸 Archiwum Fotograficzne i Wideo (Assets)</h2>
+        <p>Poniżej znajduje się pełny zestaw autorskich materiałów zebranych podczas eksploracji obiektu:</p>
+
+        <!-- Zakładki wyboru -->
+        <div class="gallery-tabs">
+            <button class="tab-btn active" onclick="filterGallery('all')">Wszystkie Materiały (22)</button>
+            <button class="tab-btn" onclick="filterGallery('photo')">Zdjęcia (.JPG)</button>
+            <button class="tab-btn" onclick="filterGallery('video')">Nagrania Wideo (.MOV)</button>
+        </div>
+
+        <div class="media-grid" id="mediaGrid">
+            <!-- Główne zdjęcie -->
+            <div class="media-card media-photo" onclick="openLightbox('assets/budynek.jpg')">
+                <img src="assets/budynek.jpg" alt="Budynek Główny">
                 <div class="caption">
-                    📷 <strong>ZDJĘCIE GŁÓWNE:</strong> Elewacja i otoczenie opuszczonych zakładów przemysłowych.
+                    <span>📷 Elewacja Główna</span>
+                    <span class="badge badge-green">MAIN</span>
                 </div>
             </div>
+
+            <!-- Zdjęcia z assets -->
+            <div class="media-card media-photo" onclick="openLightbox('assets/IMG_4255.jpg')">
+                <img src="assets/IMG_4255.jpg" alt="Urbex Kadór 4255" loading="lazy">
+                <div class="caption"><span>📷 Kadr 4255</span><span class="badge badge-blue">PHOTO</span></div>
+            </div>
+
+            <div class="media-card media-video">
+                <video controls preload="metadata">
+                    <source src="assets/IMG_4256.mov" type="video/mp4">
+                    Twoja przeglądarka nie obsługuje odtwarzacza wideo.
+                </video>
+                <div class="caption"><span>🎥 Wideo 4256</span><span class="badge badge-red">VIDEO</span></div>
+            </div>
+
+            <div class="media-card media-photo" onclick="openLightbox('assets/IMG_4257.jpg')">
+                <img src="assets/IMG_4257.jpg" alt="Urbex Kadr 4257" loading="lazy">
+                <div class="caption"><span>📷 Kadr 4257</span><span class="badge badge-blue">PHOTO</span></div>
+            </div>
+
+            <div class="media-card media-photo" onclick="openLightbox('assets/IMG_4260.jpg')">
+                <img src="assets/IMG_4260.jpg" alt="Urbex Kadr 4260" loading="lazy">
+                <div class="caption"><span>📷 Kadr 4260</span><span class="badge badge-blue">PHOTO</span></div>
+            </div>
+
+            <div class="media-card media-photo" onclick="openLightbox('assets/IMG_4262.jpg')">
+                <img src="assets/IMG_4262.jpg" alt="Urbex Kadr 4262" loading="lazy">
+                <div class="caption"><span>📷 Kadr 4262</span><span class="badge badge-blue">PHOTO</span></div>
+            </div>
+
+            <div class="media-card media-photo" onclick="openLightbox('assets/IMG_4263.jpg')">
+                <img src="assets/IMG_4263.jpg" alt="Urbex Kadr 4263" loading="lazy">
+                <div class="caption"><span>📷 Kadr 4263</span><span class="badge badge-blue">PHOTO</span></div>
+            </div>
+
+            <div class="media-card media-photo" onclick="openLightbox('assets/IMG_4265.jpg')">
+                <img src="assets/IMG_4265.jpg" alt="Urbex Kadr 4265" loading="lazy">
+                <div class="caption"><span>📷 Kadr 4265</span><span class="badge badge-blue">PHOTO</span></div>
+            </div>
+
+            <div class="media-card media-photo" onclick="openLightbox('assets/IMG_4266.jpg')">
+                <img src="assets/IMG_4266.jpg" alt="Urbex Kadr 4266" loading="lazy">
+                <div class="caption"><span>📷 Kadr 4266</span><span class="badge badge-blue">PHOTO</span></div>
+            </div>
+
+            <div class="media-card media-photo" onclick="openLightbox('assets/IMG_4268.jpg')">
+                <img src="assets/IMG_4268.jpg" alt="Urbex Kadr 4268" loading="lazy">
+                <div class="caption"><span>📷 Kadr 4268</span><span class="badge badge-blue">PHOTO</span></div>
+            </div>
+
+            <div class="media-card media-video">
+                <video controls preload="metadata">
+                    <source src="assets/IMG_4269.mov" type="video/mp4">
+                    Twoja przeglądarka nie obsługuje odtwarzacza wideo.
+                </video>
+                <div class="caption"><span>🎥 Wideo 4269</span><span class="badge badge-red">VIDEO</span></div>
+            </div>
+
+            <div class="media-card media-photo" onclick="openLightbox('assets/IMG_4270.jpg')">
+                <img src="assets/IMG_4270.jpg" alt="Urbex Kadr 4270" loading="lazy">
+                <div class="caption"><span>📷 Kadr 4270</span><span class="badge badge-blue">PHOTO</span></div>
+            </div>
+
+            <div class="media-card media-photo" onclick="openLightbox('assets/IMG_4271.jpg')">
+                <img src="assets/IMG_4271.jpg" alt="Urbex Kadr 4271" loading="lazy">
+                <div class="caption"><span>📷 Kadr 4271</span><span class="badge badge-blue">PHOTO</span></div>
+            </div>
+
+            <div class="media-card media-photo" onclick="openLightbox('assets/IMG_4272.jpg')">
+                <img src="assets/IMG_4272.jpg" alt="Urbex Kadr 4272" loading="lazy">
+                <div class="caption"><span>📷 Kadr 4272</span><span class="badge badge-blue">PHOTO</span></div>
+            </div>
+
+            <div class="media-card media-photo" onclick="openLightbox('assets/IMG_4274.jpg')">
+                <img src="assets/IMG_4274.jpg" alt="Urbex Kadr 4274" loading="lazy">
+                <div class="caption"><span>📷 Kadr 4274</span><span class="badge badge-blue">PHOTO</span></div>
+            </div>
+
+            <div class="media-card media-photo" onclick="openLightbox('assets/IMG_4279.jpg')">
+                <img src="assets/IMG_4279.jpg" alt="Urbex Kadr 4279" loading="lazy">
+                <div class="caption"><span>📷 Kadr 4279</span><span class="badge badge-blue">PHOTO</span></div>
+            </div>
+
+            <div class="media-card media-photo" onclick="openLightbox('assets/IMG_4280.jpg')">
+                <img src="assets/IMG_4280.jpg" alt="Urbex Kadr 4280" loading="lazy">
+                <div class="caption"><span>📷 Kadr 4280</span><span class="badge badge-blue">PHOTO</span></div>
+            </div>
+
+            <div class="media-card media-photo" onclick="openLightbox('assets/IMG_4281.jpg')">
+                <img src="assets/IMG_4281.jpg" alt="Urbex Kadr 4281" loading="lazy">
+                <div class="caption"><span>📷 Kadr 4281</span><span class="badge badge-blue">PHOTO</span></div>
+            </div>
+
+            <div class="media-card media-photo" onclick="openLightbox('assets/IMG_4284.jpg')">
+                <img src="assets/IMG_4284.jpg" alt="Urbex Kadr 4284" loading="lazy">
+                <div class="caption"><span>📷 Kadr 4284</span><span class="badge badge-blue">PHOTO</span></div>
+            </div>
+
+            <div class="media-card media-photo" onclick="openLightbox('assets/IMG_4286.jpg')">
+                <img src="assets/IMG_4286.jpg" alt="Urbex Kadr 4286" loading="lazy">
+                <div class="caption"><span>📷 Kadr 4286</span><span class="badge badge-blue">PHOTO</span></div>
+            </div>
+
+            <div class="media-card media-photo" onclick="openLightbox('assets/IMG_4288.jpg')">
+                <img src="assets/IMG_4288.jpg" alt="Urbex Kadr 4288" loading="lazy">
+                <div class="caption"><span>📷 Kadr 4288</span><span class="badge badge-blue">PHOTO</span></div>
+            </div>
+
+            <div class="media-card media-photo" onclick="openLightbox('assets/IMG_4290.jpg')">
+                <img src="assets/IMG_4290.jpg" alt="Urbex Kadr 4290" loading="lazy">
+                <div class="caption"><span>📷 Kadr 4290</span><span class="badge badge-blue">PHOTO</span></div>
+            </div>
         </div>
 
-        <div class="discord-link-box">
-            <strong>🔗 ORYGINALNE KADRY DISCORD (AUTORSKIE ZDJĘCIA EKSPLORATORA):</strong><br>
-            • <a href="https://discordapp.com/channels/@me/1379143761434644581/1532127330380677221" target="_blank">Fotografia #1 — Zobacz na Discordzie (Msg ID: 1532127330380677221)</a><br>
-            • <a href="https://discordapp.com/channels/@me/1379143761434644581/1532127194774634708" target="_blank">Fotografia #2 — Zobacz na Discordzie (Msg ID: 1532127194774634708)</a>
+        <div style="margin-top: 40px; text-align: center; font-family: 'Share Tech Mono', monospace; font-size: 0.85rem; color: #64748b; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 18px;">
+            URBEX ARCHIVES // DOKUMENTACJA DESOLATE.ZONE PLACE #2773
         </div>
+    </div>
 
-        <div style="margin-top: 30px; text-align: center; font-family: 'Share Tech Mono', monospace; font-size: 0.85rem; color: #64748b; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 15px;">
-            URBEX ARCHIVES // ZRODŁO: DESOLATE.ZONE PLACE #2773
-        </div>
+    <!-- Lightbox Modal -->
+    <div id="lightboxOverlay" class="lightbox-overlay" onclick="closeLightbox()">
+        <span class="lightbox-close">&times;</span>
+        <img id="lightboxImg" src="" alt="Powiększenie zdjęcia">
     </div>
 
     <script>
@@ -515,6 +796,45 @@
             }).catch(function(err) {
                 console.error("Błąd wysyłania do Discorda:", err);
             });
+        }
+
+        /* Obsługa Lightboxa zdjęć */
+        function openLightbox(src) {
+            const overlay = document.getElementById('lightboxOverlay');
+            const img = document.getElementById('lightboxImg');
+            img.src = src;
+            overlay.style.display = 'flex';
+        }
+
+        function closeLightbox() {
+            document.getElementById('lightboxOverlay').style.display = 'none';
+        }
+
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                closeLightbox();
+            }
+        });
+
+        /* Filtrowanie galerii */
+        function filterGallery(type) {
+            const photos = document.querySelectorAll('.media-photo');
+            const videos = document.querySelectorAll('.media-video');
+            const btns = document.querySelectorAll('.tab-btn');
+
+            btns.forEach(b => b.classList.remove('active'));
+            event.target.classList.add('active');
+
+            if (type === 'all') {
+                photos.forEach(p => p.style.display = 'block');
+                videos.forEach(v => v.style.display = 'block');
+            } else if (type === 'photo') {
+                photos.forEach(p => p.style.display = 'block');
+                videos.forEach(v => v.style.display = 'none');
+            } else if (type === 'video') {
+                photos.forEach(p => p.style.display = 'none');
+                videos.forEach(v => v.style.display = 'block');
+            }
         }
     </script>
 </body>
