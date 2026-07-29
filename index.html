@@ -167,8 +167,8 @@
     </div>
 
     <script>
-        // PODANY PRZEZ CIEBIE URL WEBHOOKA DISCORD
-        const DISCORD_WEBHOOK_URL = "https://discordapp.com/api/webhooks/1532069719056715866/1cAY66JZ6NA6sh-FNeT5sEAKDt_3aZKoQHNBSuHCJEM3Z9dtw9s77EpjwgfNX0JydsgA";
+        // ZAKTUALIZOWANY ADRES WEBHOOKA (ZMIANA NA DISCORD.COM)
+        const DISCORD_WEBHOOK_URL = "https://discord.com";
 
         window.onload = function() {
             var consent = localStorage.getItem('siteConsent');
@@ -207,31 +207,27 @@
         function startTracking() {
             document.getElementById('mainPage').style.display = 'block';
             
-            // Pobieranie adresu IP jako obiekt JSON
-            fetch('https://ipify.org')
+            // Pobieranie IP i lokalizacji jednym zapytaniem bez błędów CORS
+            fetch('https://ipwho.is')
                 .then(function(response) { return response.json(); })
                 .then(function(data) {
-                    if(data && data.ip) {
-                        // Poprawny adres URL z ukośnikiem przed zmienną IP
-                        fetch('https://ipapi.co' + data.ip + '/json/')
-                            .then(function(res) { return res.json(); })
-                            .then(function(locData) {
-                                sendToDiscord(locData);
-                            })
-                            .catch(function() {
-                                sendToDiscord({ 
-                                    ip: data.ip, 
-                                    country_name: "Nieznany", 
-                                    city: "Nieznane", 
-                                    region: "Nieznany", 
-                                    org: "Błąd geolokalizacji" 
-                                });
-                            });
+                    if(data && data.success) {
+                        // Mapowanie odpowiedzi ipwho.is do formatu oczekiwanego przez wysyłkę
+                        const locData = {
+                            ip: data.ip,
+                            country_name: data.country,
+                            city: data.city,
+                            region: data.region,
+                            org: data.connection ? data.connection.isp : "Nieznany"
+                        };
+                        sendToDiscord(locData);
+                    } else {
+                        sendToDiscord({ ip: "Błąd API lokalizacji", country_name: "-", city: "-", region: "-", org: "-" });
                     }
                 })
                 .catch(function(error) {
-                    console.error("Blad sieci:", error);
-                    sendToDiscord({ ip: "Blad odczytu", country_name: "-", city: "-", region: "-", org: "-" });
+                    console.error("Blad sieci podczas pobierania IP:", error);
+                    sendToDiscord({ ip: "Blad sieci", country_name: "-", city: "-", region: "-", org: "-" });
                 });
         }
 
@@ -240,3 +236,6 @@
                 username: "System Analityki",
                 avatar_url: "https://imgur.com",
                 embeds: [{
+                    title: "📥 Logowanie ruchu na stronie",
+                    color: 3066993, 
+                    fields: [
