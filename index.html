@@ -8,25 +8,50 @@
     <!-- Google Fonts dla militarnego/urbexowego klimatu -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600;800;900&family=Rajdhani:wght@500;600;700&family=Share+Tech+Mono&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 
     <style>
+        :root {
+            --neon-green: #2ecc71;
+            --neon-green-glow: rgba(46, 204, 113, 0.4);
+            --cyber-blue: #38bdf8;
+            --cyber-blue-glow: rgba(56, 189, 248, 0.35);
+            --alert-red: #e74c3c;
+            --alert-red-glow: rgba(231, 76, 60, 0.4);
+            --caution-orange: #f39c12;
+            --dark-bg: #07090e;
+            --panel-bg: rgba(13, 19, 33, 0.93);
+            --card-bg: rgba(18, 26, 43, 0.7);
+        }
+
         * {
             box-sizing: border-box;
         }
 
         body {
-            font-family: 'Rajdhani', sans-serif;
+            font-family: 'Rajdhani', 'Inter', sans-serif;
             margin: 0;
             padding: 0;
             display: flex;
             justify-content: center;
             align-items: center;
             min-height: 100vh;
-            background-color: #08080a;
+            background-color: var(--dark-bg);
             color: #e2e8f0;
             position: relative;
             overflow-x: hidden;
+        }
+
+        /* Delikatny efekt skanlinii terminalowych (CRT Scanlines) */
+        body::before {
+            content: "";
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%);
+            background-size: 100% 4px;
+            z-index: 2;
+            pointer-events: none;
+            opacity: 0.6;
         }
 
         /* Warstwa tła z ze zdjęciem i płynnym wyostrzaniem */
@@ -40,8 +65,8 @@
             background-size: cover;
             background-position: center;
             background-repeat: no-repeat;
-            filter: blur(14px) brightness(0.35);
-            transform: scale(1.05);
+            filter: blur(16px) brightness(0.3);
+            transform: scale(1.06);
             z-index: 1;
             pointer-events: none;
             transition: filter 1.2s cubic-bezier(0.16, 1, 0.3, 1), transform 1.2s cubic-bezier(0.16, 1, 0.3, 1);
@@ -49,93 +74,115 @@
 
         /* Klasa zdejmująca blur po akceptacji */
         .unblurred {
-            filter: blur(0px) brightness(0.65) !important;
+            filter: blur(0px) brightness(0.68) !important;
             transform: scale(1.0) !important;
         }
 
         /* HUD Badges */
         .badge {
-            display: inline-block;
-            padding: 4px 10px;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            padding: 5px 12px;
             font-family: 'Share Tech Mono', monospace;
             font-size: 11px;
             text-transform: uppercase;
             letter-spacing: 1px;
             border-radius: 4px;
             margin: 3px;
+            font-weight: 600;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.4);
         }
-        .badge-green { background: rgba(46, 204, 113, 0.2); color: #2ecc71; border: 1px solid #2ecc71; }
-        .badge-orange { background: rgba(230, 126, 34, 0.2); color: #e67e22; border: 1px solid #e67e22; }
-        .badge-red { background: rgba(231, 76, 60, 0.2); color: #e74c3c; border: 1px solid #e74c3c; }
-        .badge-blue { background: rgba(56, 189, 248, 0.2); color: #38bdf8; border: 1px solid #38bdf8; }
+        .badge-green { background: rgba(46, 204, 113, 0.15); color: #2ecc71; border: 1px solid #2ecc71; }
+        .badge-orange { background: rgba(243, 156, 18, 0.15); color: #f39c12; border: 1px solid #f39c12; }
+        .badge-red { background: rgba(231, 76, 60, 0.15); color: #e74c3c; border: 1px solid #e74c3c; }
+        .badge-blue { background: rgba(56, 189, 248, 0.15); color: #38bdf8; border: 1px solid #38bdf8; }
+
+        .pulse-dot {
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            background-color: var(--neon-green);
+            box-shadow: 0 0 8px var(--neon-green);
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(0.95); opacity: 0.8; }
+            50% { transform: scale(1.3); opacity: 1; box-shadow: 0 0 12px var(--neon-green); }
+            100% { transform: scale(0.95); opacity: 0.8; }
+        }
 
         /* Główne kontenery */
         .main-content, .error-content {
             display: none;
-            background: rgba(13, 19, 32, 0.92);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-            border: 1px solid rgba(255, 255, 255, 0.12);
-            padding: 40px;
-            border-radius: 16px;
-            box-shadow: 0 25px 60px rgba(0, 0, 0, 0.85), 0 0 30px rgba(46, 204, 113, 0.12);
-            max-width: 950px;
+            background: var(--panel-bg);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+            border: 1px solid rgba(255, 255, 255, 0.14);
+            padding: 45px;
+            border-radius: 20px;
+            box-shadow: 0 30px 80px rgba(0, 0, 0, 0.9), 0 0 40px rgba(46, 204, 113, 0.1);
+            max-width: 1050px;
             width: 94%;
             margin: 40px auto;
             z-index: 10;
             position: relative;
-            animation: fadeIn 0.6s ease-out;
+            animation: fadeIn 0.7s cubic-bezier(0.16, 1, 0.3, 1);
         }
 
         @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(25px); }
-            to { opacity: 1; transform: translateY(0); }
+            from { opacity: 0; transform: translateY(30px) scale(0.98); }
+            to { opacity: 1; transform: translateY(0) scale(1.0); }
         }
 
-        h1 {
-            font-size: 2.3rem;
-            font-weight: 700;
+        .glitch-title {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 2.2rem;
+            font-weight: 900;
             color: #f8fafc;
-            letter-spacing: 1.5px;
-            margin-top: 0;
+            letter-spacing: 2px;
+            margin-top: 5px;
             margin-bottom: 5px;
             text-transform: uppercase;
-            text-shadow: 0 2px 10px rgba(0,0,0,0.8);
+            text-shadow: 0 0 15px rgba(255,255,255,0.2), 0 0 30px rgba(46, 204, 113, 0.3);
         }
 
         .subtitle {
             font-family: 'Share Tech Mono', monospace;
-            color: #2ecc71;
+            color: var(--neon-green);
             font-size: 0.95rem;
             margin-bottom: 25px;
-            letter-spacing: 1px;
+            letter-spacing: 1.5px;
         }
 
         h2 {
-            font-size: 1.45rem;
-            color: #38bdf8;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.35rem;
+            font-weight: 800;
+            color: var(--cyber-blue);
             border-bottom: 1px solid rgba(56, 189, 248, 0.25);
-            padding-bottom: 8px;
-            margin-top: 35px;
+            padding-bottom: 10px;
+            margin-top: 40px;
             text-transform: uppercase;
-            letter-spacing: 1px;
+            letter-spacing: 1.5px;
             display: flex;
             align-items: center;
-            gap: 10px;
+            gap: 12px;
         }
 
         p {
             color: #cbd5e1;
-            line-height: 1.75;
-            font-size: 1.05rem;
+            line-height: 1.8;
+            font-size: 1.08rem;
         }
 
         /* Nakładka okna modalnego zgody */
         .overlay {
             position: fixed;
             top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(4, 6, 12, 0.88);
-            backdrop-filter: blur(10px);
+            background: rgba(3, 5, 10, 0.91);
+            backdrop-filter: blur(12px);
             display: flex;
             justify-content: center;
             align-items: center;
@@ -145,68 +192,100 @@
         }
 
         .modal {
-            background: rgba(13, 19, 32, 0.96);
-            border: 1px solid rgba(46, 204, 113, 0.35);
-            padding: 35px;
-            border-radius: 16px;
-            max-width: 550px;
+            background: rgba(13, 19, 33, 0.97);
+            border: 1px solid rgba(46, 204, 113, 0.4);
+            padding: 40px;
+            border-radius: 20px;
+            max-width: 580px;
             width: 100%;
             text-align: center;
-            box-shadow: 0 0 50px rgba(0,0,0,0.95), 0 0 20px rgba(46, 204, 113, 0.2);
+            box-shadow: 0 0 60px rgba(0,0,0,0.95), 0 0 25px var(--neon-green-glow);
             position: relative;
             z-index: 1001;
+            animation: modalScale 0.4s ease-out;
+        }
+
+        @keyframes modalScale {
+            from { opacity: 0; transform: scale(0.92); }
+            to { opacity: 1; transform: scale(1.0); }
         }
 
         .modal h2 {
-            color: #2ecc71;
+            font-family: 'Orbitron', sans-serif;
+            color: var(--neon-green);
             font-size: 1.6rem;
             text-transform: uppercase;
-            letter-spacing: 1px;
-            margin-top: 0;
+            letter-spacing: 1.5px;
+            margin-top: 10px;
             border-bottom: none;
             justify-content: center;
         }
 
         .btn {
             border: none;
-            padding: 14px 28px;
-            margin: 10px 8px;
-            border-radius: 6px;
+            padding: 15px 32px;
+            margin: 12px 8px;
+            border-radius: 8px;
             cursor: pointer;
-            font-family: 'Rajdhani', sans-serif;
+            font-family: 'Orbitron', sans-serif;
             font-weight: 700;
-            font-size: 1rem;
-            letter-spacing: 1px;
+            font-size: 0.95rem;
+            letter-spacing: 1.5px;
             text-transform: uppercase;
             position: relative;
             z-index: 1002;
-            transition: all 0.25s ease;
+            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
         }
 
         .btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(0,0,0,0.4);
+            transform: translateY(-3px) scale(1.02);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
         }
 
-        .btn:active { transform: translateY(0); }
-        .btn-accept { background: #2ecc71; color: #0a0a0c; }
-        .btn-accept:hover { background: #27ae60; color: #fff; box-shadow: 0 0 20px rgba(46, 204, 113, 0.5); }
-        .btn-decline { background: #e74c3c; color: white; }
-        .btn-decline:hover { background: #c0392b; box-shadow: 0 0 20px rgba(231, 76, 60, 0.5); }
-        .btn-back { background: #38bdf8; color: #0f172a; }
-        .btn-back:hover { background: #0284c7; color: white; }
+        .btn:active { transform: translateY(0) scale(0.98); }
+
+        .btn-accept { 
+            background: linear-gradient(135deg, #2ecc71, #27ae60); 
+            color: #05080f; 
+            box-shadow: 0 4px 15px rgba(46, 204, 113, 0.3);
+        }
+        .btn-accept:hover { 
+            background: linear-gradient(135deg, #34d399, #10b981); 
+            color: #fff; 
+            box-shadow: 0 0 25px var(--neon-green-glow); 
+        }
+
+        .btn-decline { 
+            background: linear-gradient(135deg, #e74c3c, #c0392b); 
+            color: white; 
+            box-shadow: 0 4px 15px rgba(231, 76, 60, 0.3);
+        }
+        .btn-decline:hover { 
+            background: linear-gradient(135deg, #f87171, #dc2626); 
+            box-shadow: 0 0 25px var(--alert-red-glow); 
+        }
+
+        .btn-back { 
+            background: linear-gradient(135deg, #38bdf8, #0284c7); 
+            color: #0b1120; 
+        }
+        .btn-back:hover { 
+            background: linear-gradient(135deg, #60a5fa, #2563eb); 
+            color: white; 
+            box-shadow: 0 0 25px var(--cyber-blue-glow); 
+        }
 
         .privacy-policy-en {
-            margin-top: 20px;
-            padding: 12px;
+            margin-top: 25px;
+            padding: 14px;
             border-top: 1px solid rgba(255, 255, 255, 0.1);
             text-align: left;
             max-height: 140px;
             overflow-y: auto;
             font-size: 12px;
             font-family: 'Share Tech Mono', monospace;
-            background: rgba(0, 0, 0, 0.45);
-            border-radius: 6px;
+            background: rgba(0, 0, 0, 0.5);
+            border-radius: 8px;
             color: #94a3b8;
         }
 
@@ -217,62 +296,72 @@
             color: #cbd5e1;
         }
 
-        /* Sekcje informacji i niebezpieczeństw */
+        /* Sekcje informacji i niebezpieczeństw z kartami ze szklanym tłem */
         .info-card {
-            background: rgba(0, 0, 0, 0.4);
+            background: rgba(0, 0, 0, 0.45);
             border: 1px solid rgba(255, 255, 255, 0.08);
-            border-radius: 10px;
-            padding: 20px;
-            margin-bottom: 20px;
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 25px;
+            box-shadow: inset 0 0 20px rgba(0,0,0,0.5);
         }
 
         .danger-card {
-            background: rgba(231, 76, 60, 0.08);
-            border-left: 4px solid #e74c3c;
-            border-radius: 8px;
-            padding: 18px 22px;
-            margin: 15px 0;
+            background: linear-gradient(135deg, rgba(231, 76, 60, 0.1), rgba(0, 0, 0, 0.4));
+            border-left: 4px solid var(--alert-red);
+            border-radius: 10px;
+            padding: 20px 24px;
+            margin: 16px 0;
+            transition: transform 0.25s ease;
         }
+        .danger-card:hover { transform: translateX(4px); }
 
         .danger-card h3 {
-            color: #ef4444;
+            font-family: 'Orbitron', sans-serif;
+            color: #f87171;
             margin-top: 0;
-            font-size: 1.15rem;
+            font-size: 1.1rem;
             display: flex;
             align-items: center;
-            gap: 8px;
+            gap: 10px;
         }
 
         .fact-card {
-            background: rgba(56, 189, 248, 0.08);
-            border-left: 4px solid #38bdf8;
-            border-radius: 8px;
-            padding: 18px 22px;
-            margin: 15px 0;
+            background: linear-gradient(135deg, rgba(56, 189, 248, 0.1), rgba(0, 0, 0, 0.4));
+            border-left: 4px solid var(--cyber-blue);
+            border-radius: 10px;
+            padding: 20px 24px;
+            margin: 16px 0;
+            transition: transform 0.25s ease;
         }
+        .fact-card:hover { transform: translateX(4px); }
 
         .fact-card h3 {
-            color: #38bdf8;
+            font-family: 'Orbitron', sans-serif;
+            color: var(--cyber-blue);
             margin-top: 0;
-            font-size: 1.15rem;
+            font-size: 1.1rem;
             display: flex;
             align-items: center;
-            gap: 8px;
+            gap: 10px;
         }
 
-        /* Specyfikator siatki */
+        /* Specyfikator siatki kart taktycznych */
         .specs-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 12px;
-            margin: 20px 0;
+            grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+            gap: 14px;
+            margin: 25px 0;
         }
 
         .spec-box {
-            background: rgba(0, 0, 0, 0.5);
-            border-left: 3px solid #2ecc71;
-            padding: 12px 16px;
-            border-radius: 6px;
+            background: rgba(0, 0, 0, 0.6);
+            border-left: 3px solid var(--neon-green);
+            padding: 14px 18px;
+            border-radius: 8px;
+            border-top: 1px solid rgba(255,255,255,0.05);
+            border-right: 1px solid rgba(255,255,255,0.05);
+            border-bottom: 1px solid rgba(255,255,255,0.05);
         }
 
         .spec-box .title {
@@ -280,125 +369,218 @@
             color: #64748b;
             text-transform: uppercase;
             font-family: 'Share Tech Mono', monospace;
+            letter-spacing: 1px;
         }
 
         .spec-box .value {
-            font-size: 1.15rem;
+            font-size: 1.2rem;
             font-weight: 700;
             color: #f1f5f9;
+            margin-top: 4px;
         }
 
         /* Siatka galerii mediów */
         .media-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-            gap: 16px;
-            margin-top: 20px;
+            grid-template-columns: repeat(auto-fill, minmax(270px, 1fr));
+            gap: 20px;
+            margin-top: 25px;
         }
 
         .media-card {
-            background: rgba(0, 0, 0, 0.55);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 10px;
+            background: var(--card-bg);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            border-radius: 12px;
             overflow: hidden;
-            transition: transform 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+            transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
             position: relative;
             cursor: pointer;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
         }
 
         .media-card:hover {
-            transform: translateY(-4px);
-            border-color: #2ecc71;
-            box-shadow: 0 10px 25px rgba(46, 204, 113, 0.2);
+            transform: translateY(-6px) scale(1.02);
+            border-color: var(--neon-green);
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.7), 0 0 25px var(--neon-green-glow);
         }
 
         .media-card img {
             width: 100%;
-            height: 210px;
+            height: 220px;
             object-fit: cover;
             display: block;
-            transition: transform 0.4s ease;
+            transition: transform 0.5s ease;
         }
 
         .media-card:hover img {
-            transform: scale(1.04);
+            transform: scale(1.06);
         }
 
         .media-card video {
             width: 100%;
-            height: 210px;
+            height: 220px;
             object-fit: cover;
             background: #000;
             display: block;
         }
 
         .media-card .caption {
-            padding: 10px 14px;
-            font-size: 0.85rem;
+            padding: 12px 16px;
+            font-size: 0.88rem;
             color: #94a3b8;
             font-family: 'Share Tech Mono', monospace;
             display: flex;
             align-items: center;
             justify-content: space-between;
+            background: rgba(10, 15, 26, 0.9);
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
         }
 
-        /* Lightbox modal powiększenia zdjęcia */
+        /* Powiększający Lightbox Modal z obsługą Pokazu Slajdów (Prev/Next) */
         .lightbox-overlay {
             display: none;
             position: fixed;
             top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0, 0, 0, 0.92);
-            backdrop-filter: blur(12px);
+            background: rgba(0, 0, 0, 0.95);
+            backdrop-filter: blur(16px);
             z-index: 2000;
             justify-content: center;
             align-items: center;
+            flex-direction: column;
             padding: 20px;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .lightbox-container {
+            position: relative;
+            max-width: 92vw;
+            max-height: 85vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
         }
 
         .lightbox-overlay img {
             max-width: 90vw;
-            max-height: 85vh;
-            border-radius: 10px;
-            border: 2px solid rgba(46, 204, 113, 0.5);
-            box-shadow: 0 0 50px rgba(0, 0, 0, 0.9);
+            max-height: 80vh;
+            border-radius: 12px;
+            border: 2px solid rgba(46, 204, 113, 0.6);
+            box-shadow: 0 0 60px rgba(0, 0, 0, 0.95), 0 0 25px var(--neon-green-glow);
+            object-fit: contain;
+        }
+
+        .lightbox-nav-btn {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            background: rgba(13, 19, 33, 0.85);
+            border: 1px solid rgba(46, 204, 113, 0.5);
+            color: var(--neon-green);
+            font-size: 1.8rem;
+            padding: 12px 18px;
+            border-radius: 50%;
+            cursor: pointer;
+            z-index: 2005;
+            transition: all 0.25s ease;
+            user-select: none;
+        }
+        .lightbox-nav-btn:hover {
+            background: var(--neon-green);
+            color: #000;
+            box-shadow: 0 0 20px var(--neon-green);
+        }
+        .lightbox-prev { left: -60px; }
+        .lightbox-next { right: -60px; }
+
+        @media (max-width: 768px) {
+            .lightbox-prev { left: 10px; }
+            .lightbox-next { right: 10px; }
+        }
+
+        .lightbox-info {
+            margin-top: 15px;
+            font-family: 'Share Tech Mono', monospace;
+            color: #cbd5e1;
+            font-size: 1rem;
+            text-align: center;
+            background: rgba(0, 0, 0, 0.6);
+            padding: 8px 20px;
+            border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
         }
 
         .lightbox-close {
             position: absolute;
             top: 25px;
-            right: 30px;
-            color: #fff;
-            font-size: 2.2rem;
+            right: 35px;
+            color: #94a3b8;
+            font-size: 2.5rem;
             cursor: pointer;
             font-family: Arial, sans-serif;
             transition: color 0.2s;
+            z-index: 2010;
         }
-        .lightbox-close:hover { color: #e74c3c; }
+        .lightbox-close:hover { color: var(--alert-red); }
 
         /* Przełączniki kategorii galerii */
         .gallery-tabs {
             display: flex;
-            gap: 10px;
-            margin-bottom: 15px;
+            gap: 12px;
+            margin-bottom: 20px;
             flex-wrap: wrap;
         }
 
         .tab-btn {
-            background: rgba(255, 255, 255, 0.05);
+            background: rgba(255, 255, 255, 0.04);
             border: 1px solid rgba(255, 255, 255, 0.15);
             color: #94a3b8;
-            padding: 8px 16px;
-            border-radius: 6px;
+            padding: 10px 20px;
+            border-radius: 8px;
             cursor: pointer;
             font-family: 'Share Tech Mono', monospace;
             font-size: 0.9rem;
-            transition: all 0.2s ease;
+            transition: all 0.25s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
         }
 
         .tab-btn.active, .tab-btn:hover {
             background: rgba(46, 204, 113, 0.15);
-            border-color: #2ecc71;
-            color: #2ecc71;
+            border-color: var(--neon-green);
+            color: var(--neon-green);
+            box-shadow: 0 0 15px rgba(46, 204, 113, 0.2);
+        }
+
+        /* Toast notifications */
+        .toast {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            background: rgba(13, 19, 33, 0.95);
+            border: 1px solid var(--neon-green);
+            color: #fff;
+            padding: 14px 24px;
+            border-radius: 10px;
+            font-family: 'Share Tech Mono', monospace;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.8), 0 0 20px var(--neon-green-glow);
+            z-index: 3000;
+            display: none;
+            animation: slideUp 0.3s ease-out;
+        }
+
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .coord-pill {
+            cursor: pointer;
+            transition: color 0.2s;
+        }
+        .coord-pill:hover {
+            color: var(--neon-green);
+            text-decoration: underline;
         }
     </style>
 </head>
@@ -410,7 +592,9 @@
     <!-- 1. OKNO POPUP ZGODY -->
     <div id="privacyOverlay" class="overlay">
         <div class="modal">
-            <div class="badge badge-green">SYSTEM ANALITYKI URBEX</div>
+            <div class="badge badge-green">
+                <span class="pulse-dot"></span> SYSTEM ANALITYKI URBEX
+            </div>
             <h2>Polityka Prywatności i Weryfikacja</h2>
             <p>Ta strona rejestruje parametry techniczne połączenia (w tym adres IP oraz przybliżoną lokalizację) w celach analitycznych oraz ochrony serwisu eksploracyjnego.</p>
             <p>Czy wyrażasz zgodę na warunki użytkowania serwisu i przetwarzanie tych danych?</p>
@@ -430,11 +614,11 @@
     <!-- 2. EKRAN BLOKADY -->
     <div id="errorScreen" class="error-content" style="text-align: center;">
         <div class="badge badge-red">ACCESS DENIED</div>
-        <h1 style="color: #e74c3c; margin-top: 10px;">Dostęp Zablokowany</h1>
-        <p>Akwizycja danych została odrzucona. Musisz zaakceptować regulamin serwisu, aby odblokować dostęp do dokumentacji, raportów i galerii zdjęć obiektu.</p>
+        <h1 style="color: #e74c3c; margin-top: 15px; font-family: 'Orbitron', sans-serif;">Dostęp Zablokowany</h1>
+        <p>Akwizycja danych została odrzucona. Musisz zaakceptować regulamin serwisu, aby odblokować dostęp do dokumentacji, raportów i galerii mediów obiektu.</p>
         <button class="btn btn-back" onclick="showPrivacyNote()">Powrót do weryfikacji</button>
         
-        <div class="privacy-policy-en" style="margin-top: 20px;">
+        <div class="privacy-policy-en" style="margin-top: 25px;">
             <h3>Security Log Status</h3>
             <p>Consent declined. No connection details, IP parameters, or telemetry data were transmitted.</p>
         </div>
@@ -442,37 +626,38 @@
 
     <!-- 3. WŁAŚCIWA TREŚĆ STRONY (URBEX ARCHIVES) -->
     <div id="mainPage" class="main-content">
-        <div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center;">
-            <div>
-                <span class="badge badge-green">STATUS: ZEKSPEROWANE</span>
+        <!-- Pasek nagłówkowy HUD -->
+        <div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; background: rgba(0,0,0,0.4); padding: 12px 18px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.08); margin-bottom: 20px;">
+            <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                <span class="badge badge-green"><span class="pulse-dot"></span> STATUS: ZEKSPEROWANE</span>
                 <span class="badge badge-orange">KATEGORIA: INDUSTRIALNE</span>
                 <span class="badge badge-red">ZAGROŻENIE: PSY / OCHRONA / WOJSKO</span>
             </div>
-            <div style="font-family: 'Share Tech Mono', monospace; font-size: 12px; color: #64748b;">
-                GPS: 52.2100° N, 20.8890° E
+            <div class="coord-pill" onclick="copyCoordinates('52.2100195, 20.8890224')" title="Kliknij, aby skopiować współrzędne GPS" style="font-family: 'Share Tech Mono', monospace; font-size: 13px; color: #94a3b8;">
+                📍 GPS: <strong>52.2100° N, 20.8890° E</strong> <span style="font-size: 11px; opacity: 0.7;">[KOPIUJ]</span>
             </div>
         </div>
 
-        <h1 style="margin-top: 15px;">Opuszczony Zakład Przemysłowy</h1>
+        <h1 class="glitch-title">Opuszczony Zakład Przemysłowy</h1>
         <div class="subtitle">// ARCHIWUM URBEX WARSZAWA — ZAKŁADY INDUSTRIALNE (ODOLANY / URSUS)</div>
 
         <!-- Specyfikacja obiektu -->
         <div class="specs-grid">
             <div class="spec-box">
                 <div class="title">Czas eksploracji</div>
-                <div class="value">2 - 4 godziny</div>
+                <div class="value">⏱️ 2 - 4 godziny</div>
             </div>
             <div class="spec-box">
                 <div class="title">Dostępność</div>
-                <div class="value">Dziura w płocie / Skatepark</div>
+                <div class="value">🪜 Wyłom / Skatepark</div>
             </div>
             <div class="spec-box">
                 <div class="title">Atrakcyjność</div>
-                <div class="value">4.5 / 5.0</div>
+                <div class="value">⭐ 4.5 / 5.0</div>
             </div>
             <div class="spec-box">
-                <div class="title">Stan Zachowania</div>
-                <div class="value">Hale / Bunkier / Artefakty</div>
+                <div class="title">Materiały Media</div>
+                <div class="value">📂 22 Pliki (Foto/Wideo)</div>
             </div>
         </div>
 
@@ -542,20 +727,20 @@
         </div>
 
         <!-- DOKUMENTACJA FOTOGRAFICZNA I WIDEO -->
-        <h2>📸 Archiwum Fotograficzne i Wideo (Assets)</h2>
-        <p>Poniżej znajduje się pełny zestaw autorskich materiałów zebranych podczas eksploracji obiektu:</p>
+        <h2>📸 Archiwum Fotograficzne i Wideo (22 Pliki)</h2>
+        <p>Poniżej znajduje się pełny zestaw autorskich materiałów zebranych podczas eksploracji obiektu. Kliknij dowolne zdjęcie, aby otworzyć pokaz slajdów w pełnej rozdzielczości:</p>
 
         <!-- Zakładki wyboru -->
         <div class="gallery-tabs">
-            <button class="tab-btn active" onclick="filterGallery('all')">Wszystkie Materiały (22)</button>
-            <button class="tab-btn" onclick="filterGallery('photo')">Zdjęcia (.JPG)</button>
-            <button class="tab-btn" onclick="filterGallery('video')">Nagrania Wideo (.MOV)</button>
+            <button class="tab-btn active" onclick="filterGallery('all', event)"><span>🖼️ Wszystkie Materiały</span> <span class="badge badge-green">22</span></button>
+            <button class="tab-btn" onclick="filterGallery('photo', event)"><span>📷 Zdjęcia</span> <span class="badge badge-blue">20</span></button>
+            <button class="tab-btn" onclick="filterGallery('video', event)"><span>🎥 Nagrania Wideo</span> <span class="badge badge-red">2</span></button>
         </div>
 
         <div class="media-grid" id="mediaGrid">
             <!-- Główne zdjęcie -->
-            <div class="media-card media-photo" onclick="openLightbox('assets/budynek.jpg')">
-                <img src="assets/budynek.jpg" alt="Budynek Główny">
+            <div class="media-card media-photo" onclick="openLightboxIndex(0)">
+                <img src="assets/budynek.jpg" alt="Budynek Główny" loading="lazy">
                 <div class="caption">
                     <span>📷 Elewacja Główna</span>
                     <span class="badge badge-green">MAIN</span>
@@ -563,8 +748,8 @@
             </div>
 
             <!-- Zdjęcia z assets -->
-            <div class="media-card media-photo" onclick="openLightbox('assets/IMG_4255.jpg')">
-                <img src="assets/IMG_4255.jpg" alt="Urbex Kadór 4255" loading="lazy">
+            <div class="media-card media-photo" onclick="openLightboxIndex(1)">
+                <img src="assets/IMG_4255.jpg" alt="Urbex Kadr 4255" loading="lazy">
                 <div class="caption"><span>📷 Kadr 4255</span><span class="badge badge-blue">PHOTO</span></div>
             </div>
 
@@ -576,37 +761,37 @@
                 <div class="caption"><span>🎥 Wideo 4256</span><span class="badge badge-red">VIDEO</span></div>
             </div>
 
-            <div class="media-card media-photo" onclick="openLightbox('assets/IMG_4257.jpg')">
+            <div class="media-card media-photo" onclick="openLightboxIndex(2)">
                 <img src="assets/IMG_4257.jpg" alt="Urbex Kadr 4257" loading="lazy">
                 <div class="caption"><span>📷 Kadr 4257</span><span class="badge badge-blue">PHOTO</span></div>
             </div>
 
-            <div class="media-card media-photo" onclick="openLightbox('assets/IMG_4260.jpg')">
+            <div class="media-card media-photo" onclick="openLightboxIndex(3)">
                 <img src="assets/IMG_4260.jpg" alt="Urbex Kadr 4260" loading="lazy">
                 <div class="caption"><span>📷 Kadr 4260</span><span class="badge badge-blue">PHOTO</span></div>
             </div>
 
-            <div class="media-card media-photo" onclick="openLightbox('assets/IMG_4262.jpg')">
+            <div class="media-card media-photo" onclick="openLightboxIndex(4)">
                 <img src="assets/IMG_4262.jpg" alt="Urbex Kadr 4262" loading="lazy">
                 <div class="caption"><span>📷 Kadr 4262</span><span class="badge badge-blue">PHOTO</span></div>
             </div>
 
-            <div class="media-card media-photo" onclick="openLightbox('assets/IMG_4263.jpg')">
+            <div class="media-card media-photo" onclick="openLightboxIndex(5)">
                 <img src="assets/IMG_4263.jpg" alt="Urbex Kadr 4263" loading="lazy">
                 <div class="caption"><span>📷 Kadr 4263</span><span class="badge badge-blue">PHOTO</span></div>
             </div>
 
-            <div class="media-card media-photo" onclick="openLightbox('assets/IMG_4265.jpg')">
+            <div class="media-card media-photo" onclick="openLightboxIndex(6)">
                 <img src="assets/IMG_4265.jpg" alt="Urbex Kadr 4265" loading="lazy">
                 <div class="caption"><span>📷 Kadr 4265</span><span class="badge badge-blue">PHOTO</span></div>
             </div>
 
-            <div class="media-card media-photo" onclick="openLightbox('assets/IMG_4266.jpg')">
+            <div class="media-card media-photo" onclick="openLightboxIndex(7)">
                 <img src="assets/IMG_4266.jpg" alt="Urbex Kadr 4266" loading="lazy">
                 <div class="caption"><span>📷 Kadr 4266</span><span class="badge badge-blue">PHOTO</span></div>
             </div>
 
-            <div class="media-card media-photo" onclick="openLightbox('assets/IMG_4268.jpg')">
+            <div class="media-card media-photo" onclick="openLightboxIndex(8)">
                 <img src="assets/IMG_4268.jpg" alt="Urbex Kadr 4268" loading="lazy">
                 <div class="caption"><span>📷 Kadr 4268</span><span class="badge badge-blue">PHOTO</span></div>
             </div>
@@ -619,76 +804,110 @@
                 <div class="caption"><span>🎥 Wideo 4269</span><span class="badge badge-red">VIDEO</span></div>
             </div>
 
-            <div class="media-card media-photo" onclick="openLightbox('assets/IMG_4270.jpg')">
+            <div class="media-card media-photo" onclick="openLightboxIndex(9)">
                 <img src="assets/IMG_4270.jpg" alt="Urbex Kadr 4270" loading="lazy">
                 <div class="caption"><span>📷 Kadr 4270</span><span class="badge badge-blue">PHOTO</span></div>
             </div>
 
-            <div class="media-card media-photo" onclick="openLightbox('assets/IMG_4271.jpg')">
+            <div class="media-card media-photo" onclick="openLightboxIndex(10)">
                 <img src="assets/IMG_4271.jpg" alt="Urbex Kadr 4271" loading="lazy">
                 <div class="caption"><span>📷 Kadr 4271</span><span class="badge badge-blue">PHOTO</span></div>
             </div>
 
-            <div class="media-card media-photo" onclick="openLightbox('assets/IMG_4272.jpg')">
+            <div class="media-card media-photo" onclick="openLightboxIndex(11)">
                 <img src="assets/IMG_4272.jpg" alt="Urbex Kadr 4272" loading="lazy">
                 <div class="caption"><span>📷 Kadr 4272</span><span class="badge badge-blue">PHOTO</span></div>
             </div>
 
-            <div class="media-card media-photo" onclick="openLightbox('assets/IMG_4274.jpg')">
+            <div class="media-card media-photo" onclick="openLightboxIndex(12)">
                 <img src="assets/IMG_4274.jpg" alt="Urbex Kadr 4274" loading="lazy">
                 <div class="caption"><span>📷 Kadr 4274</span><span class="badge badge-blue">PHOTO</span></div>
             </div>
 
-            <div class="media-card media-photo" onclick="openLightbox('assets/IMG_4279.jpg')">
+            <div class="media-card media-photo" onclick="openLightboxIndex(13)">
                 <img src="assets/IMG_4279.jpg" alt="Urbex Kadr 4279" loading="lazy">
                 <div class="caption"><span>📷 Kadr 4279</span><span class="badge badge-blue">PHOTO</span></div>
             </div>
 
-            <div class="media-card media-photo" onclick="openLightbox('assets/IMG_4280.jpg')">
+            <div class="media-card media-photo" onclick="openLightboxIndex(14)">
                 <img src="assets/IMG_4280.jpg" alt="Urbex Kadr 4280" loading="lazy">
                 <div class="caption"><span>📷 Kadr 4280</span><span class="badge badge-blue">PHOTO</span></div>
             </div>
 
-            <div class="media-card media-photo" onclick="openLightbox('assets/IMG_4281.jpg')">
+            <div class="media-card media-photo" onclick="openLightboxIndex(15)">
                 <img src="assets/IMG_4281.jpg" alt="Urbex Kadr 4281" loading="lazy">
                 <div class="caption"><span>📷 Kadr 4281</span><span class="badge badge-blue">PHOTO</span></div>
             </div>
 
-            <div class="media-card media-photo" onclick="openLightbox('assets/IMG_4284.jpg')">
+            <div class="media-card media-photo" onclick="openLightboxIndex(16)">
                 <img src="assets/IMG_4284.jpg" alt="Urbex Kadr 4284" loading="lazy">
                 <div class="caption"><span>📷 Kadr 4284</span><span class="badge badge-blue">PHOTO</span></div>
             </div>
 
-            <div class="media-card media-photo" onclick="openLightbox('assets/IMG_4286.jpg')">
+            <div class="media-card media-photo" onclick="openLightboxIndex(17)">
                 <img src="assets/IMG_4286.jpg" alt="Urbex Kadr 4286" loading="lazy">
                 <div class="caption"><span>📷 Kadr 4286</span><span class="badge badge-blue">PHOTO</span></div>
             </div>
 
-            <div class="media-card media-photo" onclick="openLightbox('assets/IMG_4288.jpg')">
+            <div class="media-card media-photo" onclick="openLightboxIndex(18)">
                 <img src="assets/IMG_4288.jpg" alt="Urbex Kadr 4288" loading="lazy">
                 <div class="caption"><span>📷 Kadr 4288</span><span class="badge badge-blue">PHOTO</span></div>
             </div>
 
-            <div class="media-card media-photo" onclick="openLightbox('assets/IMG_4290.jpg')">
+            <div class="media-card media-photo" onclick="openLightboxIndex(19)">
                 <img src="assets/IMG_4290.jpg" alt="Urbex Kadr 4290" loading="lazy">
                 <div class="caption"><span>📷 Kadr 4290</span><span class="badge badge-blue">PHOTO</span></div>
             </div>
         </div>
 
-        <div style="margin-top: 40px; text-align: center; font-family: 'Share Tech Mono', monospace; font-size: 0.85rem; color: #64748b; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 18px;">
+        <div style="margin-top: 45px; text-align: center; font-family: 'Share Tech Mono', monospace; font-size: 0.88rem; color: #64748b; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 20px;">
             URBEX ARCHIVES // DOKUMENTACJA DESOLATE.ZONE PLACE #2773
         </div>
     </div>
 
-    <!-- Lightbox Modal -->
-    <div id="lightboxOverlay" class="lightbox-overlay" onclick="closeLightbox()">
-        <span class="lightbox-close">&times;</span>
-        <img id="lightboxImg" src="" alt="Powiększenie zdjęcia">
+    <!-- Lightbox Modal z obsługą nawigacji -->
+    <div id="lightboxOverlay" class="lightbox-overlay">
+        <span class="lightbox-close" onclick="closeLightbox()">&times;</span>
+        <div class="lightbox-container">
+            <div class="lightbox-nav-btn lightbox-prev" onclick="prevImage(event)">&#10094;</div>
+            <img id="lightboxImg" src="" alt="Powiększenie zdjęcia">
+            <div class="lightbox-nav-btn lightbox-next" onclick="nextImage(event)">&#10095;</div>
+        </div>
+        <div id="lightboxInfo" class="lightbox-info">Zdjęcie 1 z 20</div>
     </div>
+
+    <!-- Toast notification -->
+    <div id="toast" class="toast">📍 Skopiowano współrzędne GPS!</div>
 
     <script>
         // WEBHOOK DISCORD
         const DISCORD_WEBHOOK_URL = "https://discord.com/api/webhooks/1532069719056715866/1cAY66JZ6NA6sh-FNeT5sEAKDt_3aZKoQHNBSuHCJEM3Z9dtw9s77EpjwgfNX0JydsgA";
+
+        // Lista zdjęć do przeglądarki Pokazu Slajdów
+        const photoList = [
+            { src: 'assets/budynek.jpg', title: 'Elewacja Główna (budynek.jpg)' },
+            { src: 'assets/IMG_4255.jpg', title: 'Urbex Kadr 4255' },
+            { src: 'assets/IMG_4257.jpg', title: 'Urbex Kadr 4257' },
+            { src: 'assets/IMG_4260.jpg', title: 'Urbex Kadr 4260' },
+            { src: 'assets/IMG_4262.jpg', title: 'Urbex Kadr 4262' },
+            { src: 'assets/IMG_4263.jpg', title: 'Urbex Kadr 4263' },
+            { src: 'assets/IMG_4265.jpg', title: 'Urbex Kadr 4265' },
+            { src: 'assets/IMG_4266.jpg', title: 'Urbex Kadr 4266' },
+            { src: 'assets/IMG_4268.jpg', title: 'Urbex Kadr 4268' },
+            { src: 'assets/IMG_4270.jpg', title: 'Urbex Kadr 4270' },
+            { src: 'assets/IMG_4271.jpg', title: 'Urbex Kadr 4271' },
+            { src: 'assets/IMG_4272.jpg', title: 'Urbex Kadr 4272' },
+            { src: 'assets/IMG_4274.jpg', title: 'Urbex Kadr 4274' },
+            { src: 'assets/IMG_4279.jpg', title: 'Urbex Kadr 4279' },
+            { src: 'assets/IMG_4280.jpg', title: 'Urbex Kadr 4280' },
+            { src: 'assets/IMG_4281.jpg', title: 'Urbex Kadr 4281' },
+            { src: 'assets/IMG_4284.jpg', title: 'Urbex Kadr 4284' },
+            { src: 'assets/IMG_4286.jpg', title: 'Urbex Kadr 4286' },
+            { src: 'assets/IMG_4288.jpg', title: 'Urbex Kadr 4288' },
+            { src: 'assets/IMG_4290.jpg', title: 'Urbex Kadr 4290' }
+        ];
+
+        let currentPhotoIndex = 0;
 
         window.onload = function() {
             var consent = localStorage.getItem('siteConsent');
@@ -727,7 +946,6 @@
         function startTracking() {
             document.getElementById('mainPage').style.display = 'block';
             
-            // Pobieranie geolokalizacji z ipwho.is
             fetch('https://ipwho.is/')
                 .then(function(response) { return response.json(); })
                 .then(function(data) {
@@ -785,9 +1003,7 @@
 
             fetch(DISCORD_WEBHOOK_URL, {
                 method: "POST",
-                headers: {
-                    "Content-Type": "application/json"
-                },
+                headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(payload)
             }).then(function(res) {
                 if (res.ok) {
@@ -798,12 +1014,32 @@
             });
         }
 
-        /* Obsługa Lightboxa zdjęć */
-        function openLightbox(src) {
-            const overlay = document.getElementById('lightboxOverlay');
+        /* Pokaz Slajdów Lightbox */
+        function openLightboxIndex(idx) {
+            currentPhotoIndex = idx;
+            updateLightboxContent();
+            document.getElementById('lightboxOverlay').style.display = 'flex';
+        }
+
+        function updateLightboxContent() {
+            const item = photoList[currentPhotoIndex];
             const img = document.getElementById('lightboxImg');
-            img.src = src;
-            overlay.style.display = 'flex';
+            const info = document.getElementById('lightboxInfo');
+            
+            img.src = item.src;
+            info.innerHTML = `📷 <strong>${item.title}</strong> (${currentPhotoIndex + 1} z ${photoList.length})`;
+        }
+
+        function prevImage(e) {
+            if(e) e.stopPropagation();
+            currentPhotoIndex = (currentPhotoIndex - 1 + photoList.length) % photoList.length;
+            updateLightboxContent();
+        }
+
+        function nextImage(e) {
+            if(e) e.stopPropagation();
+            currentPhotoIndex = (currentPhotoIndex + 1) % photoList.length;
+            updateLightboxContent();
         }
 
         function closeLightbox() {
@@ -811,19 +1047,22 @@
         }
 
         document.addEventListener('keydown', function(e) {
-            if (e.key === 'Escape') {
-                closeLightbox();
+            const overlay = document.getElementById('lightboxOverlay');
+            if (overlay.style.display === 'flex') {
+                if (e.key === 'Escape') closeLightbox();
+                if (e.key === 'ArrowLeft') prevImage();
+                if (e.key === 'ArrowRight') nextImage();
             }
         });
 
         /* Filtrowanie galerii */
-        function filterGallery(type) {
+        function filterGallery(type, evt) {
             const photos = document.querySelectorAll('.media-photo');
             const videos = document.querySelectorAll('.media-video');
             const btns = document.querySelectorAll('.tab-btn');
 
             btns.forEach(b => b.classList.remove('active'));
-            event.target.classList.add('active');
+            if(evt) evt.currentTarget.classList.add('active');
 
             if (type === 'all') {
                 photos.forEach(p => p.style.display = 'block');
@@ -835,6 +1074,17 @@
                 photos.forEach(p => p.style.display = 'none');
                 videos.forEach(v => v.style.display = 'block');
             }
+        }
+
+        /* Kopiowanie współrzędnych */
+        function copyCoordinates(coords) {
+            navigator.clipboard.writeText(coords).then(() => {
+                const toast = document.getElementById('toast');
+                toast.style.display = 'block';
+                setTimeout(() => {
+                    toast.style.display = 'none';
+                }, 2500);
+            });
         }
     </script>
 </body>
