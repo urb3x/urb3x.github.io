@@ -617,24 +617,50 @@
     <!-- Warstwa tła -->
     <div id="bgLayer" class="background-blur"></div>
 
-    <!-- 1. OKNO POPUP ZGODY -->
+    <!-- 1. OKNO POPUP ZGODY (APPEALING & ENCOURAGING VERIFICATION MODAL) -->
     <div id="privacyOverlay" class="overlay">
-        <div class="modal">
-            <div class="badge badge-green">
-                <span class="pulse-dot"></span> SYSTEM ANALITYKI URBEX
+        <div class="modal" style="max-width: 620px;">
+            <div class="badge badge-green" style="padding: 6px 14px; font-size: 12px; margin-bottom: 10px;">
+                <span class="pulse-dot"></span> 🔓 ARTYKUŁ gotowy do odblokowania
             </div>
-            <h2>Polityka Prywatności i Weryfikacja</h2>
-            <p>Ta strona rejestruje parametry techniczne połączenia (w tym adres IP oraz przybliżoną lokalizację) w celach analitycznych oraz ochrony serwisu eksploracyjnego.</p>
-            <p>Czy wyrażasz zgodę na warunki użytkowania serwisu i przetwarzanie tych danych?</p>
             
-            <button class="btn btn-accept" onclick="acceptTerms()">[ ACCEPT ] Akceptuję</button>
-            <button class="btn btn-decline" onclick="declineTerms()">[ DECLINE ] Odrzucam</button>
+            <h2 style="font-family: 'Orbitron', sans-serif; font-size: 1.7rem; color: #fff; margin-bottom: 8px;">
+                Witaj w Archiwum Urbex
+            </h2>
+            <div style="font-family: 'Share Tech Mono', monospace; color: var(--neon-green); font-size: 0.95rem; margin-bottom: 20px;">
+                // WERYFIKACJA DOSTĘPU DO RAPORTU & GALERII MEDIÓW
+            </div>
+
+            <p style="color: #cbd5e1; font-size: 1.05rem; line-height: 1.6; margin-bottom: 20px;">
+                Zaakceptuj regulamin użytkowania serwisu, aby uzyskać natychmiastowy dostęp do pełnej dokumentacji eksploracyjnej obiektu <strong>Opuszczony Zakład Przemysłowy</strong>.
+            </p>
+
+            <!-- Lista odblokowywanych materiałów -->
+            <div style="background: rgba(0,0,0,0.5); border: 1px solid rgba(46, 204, 113, 0.25); border-radius: 12px; padding: 16px 20px; text-align: left; margin-bottom: 25px; font-family: 'Share Tech Mono', monospace; font-size: 0.9rem; color: #e2e8f0;">
+                <div style="color: var(--neon-green); font-weight: 700; margin-bottom: 8px; text-transform: uppercase; font-size: 0.85rem; letter-spacing: 1px;">
+                    ⚡ Po akceptacji natychmiast odblokujesz:
+                </div>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 8px;">
+                    <div>✅ <strong>20 Zdjęć HD</strong> (Hale, dachy, schrony)</div>
+                    <div>✅ <strong>2 Nagrania Wideo</strong> z eksploracji</div>
+                    <div>✅ <strong>Współrzędne GPS</strong> & Dojazd</div>
+                    <div>✅ <strong>Raport Ochrony & Wojska</strong></div>
+                </div>
+            </div>
+
+            <!-- Przyciski Akcji -->
+            <div style="display: flex; flex-wrap: wrap; justify-content: center; gap: 10px;">
+                <button class="btn btn-accept" onclick="acceptTerms()" style="padding: 16px 36px; font-size: 1rem;">
+                    🚀 ODBLOKUJ DANE [ AKCEPTUJĘ ]
+                </button>
+                <button class="btn btn-decline" onclick="declineTerms()" style="padding: 14px 24px; opacity: 0.85; font-size: 0.85rem;">
+                    ✕ Zablokuj dostęp
+                </button>
+            </div>
 
             <div class="privacy-policy-en">
-                <h3>Privacy Policy & Consent</h3>
-                <p><strong>1. Telemetry Data:</strong> Clicking "Accept" automatically registers public network connection parameters (IP address, location, ISP, User-Agent) to monitor traffic telemetry.</p>
-                <p><strong>2. Transmission:</strong> Connection logs are securely forwarded to the administrative terminal operated via an automated Discord logging webhook.</p>
-                <p><strong>3. Non-Storage:</strong> No telemetry is saved permanently on GitHub Pages servers.</p>
+                <h3>Gwarancja Prywatności & Regulamin</h3>
+                <p>Klikając <strong>"Akceptuję"</strong> wyrażasz zgodę na regulamin i rejestrację parametrów technicznych połączenia (IP, lokalizacja, ISP, przeglądarka) na potrzeby telemetryczne i ochronę serwisu za pomocą bezpiecznego webhooka Discord. Brak reklam, brak spamu.</p>
             </div>
         </div>
     </div>
