@@ -426,6 +426,25 @@
             }
         }
 
+        /* Półprzezroczysty znak wodny w narożniku kadrów */
+        .media-card::after {
+            content: "📷 @piotr72181";
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: rgba(0, 0, 0, 0.55);
+            color: rgba(255, 255, 255, 0.85);
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 10px;
+            padding: 3px 8px;
+            border-radius: 4px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            pointer-events: none;
+            backdrop-filter: blur(4px);
+            z-index: 6;
+            letter-spacing: 0.5px;
+        }
+
         /* Hover: wyprostowanie, uniesienie nad inne karty i poświata */
         .media-card:hover {
             transform: rotate(0deg) translateY(-10px) scale(1.05) !important;
