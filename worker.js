@@ -1,9 +1,7 @@
 // ============================================================================
 // CLOUDFLARE WORKER PROXY & URBEX ANALYTICS CHART SYSTEM WITH DISCORD BOT
 // Webhook: https://discordapp.com/api/webhooks/1532408149288685709/...
-// Bot Client ID: 1532410970893189120
-// Link do dodania Bota na Twój serwer Discord:
-// https://discord.com/api/oauth2/authorize?client_id=1532410970893189120&permissions=2048&scope=bot
+// Wyzwalacze komend: /chart lub //c lub URL /chart albo //c
 // ============================================================================
 
 const DISCORD_WEBHOOK_URL = "https://discordapp.com/api/webhooks/1532408149288685709/LjejiSETRtI4IEnixniDvurig20W6K6smJU-k_e5V3mfD9H9Tg_zfuRndeEK42JY01Z-";
@@ -28,10 +26,11 @@ export default {
     }
 
     const url = new URL(request.url);
+    const pathname = url.pathname.toLowerCase();
 
-    // Wyzwolenie komendy :chart przez URL /chart lub GET /chart
-    if (url.pathname === "/chart" || request.method === "GET") {
-      const chartRes = await sendChartToDiscord(env, "Wywołanie ręczne (URL / :chart)");
+    // Wyzwolenie ręczne przez URL /chart lub //c lub /c lub GET /chart
+    if (pathname === "/chart" || pathname === "//c" || pathname === "/c" || (request.method === "GET" && pathname !== "/")) {
+      const chartRes = await sendChartToDiscord(env, "Wywołanie ręczne (URL /chart lub //c)");
       return new Response(JSON.stringify({ success: true, status: "Chart sent to Discord", res: chartRes }), {
         status: 200,
         headers: { ...corsHeaders, "Content-Type": "application/json" }
@@ -45,10 +44,11 @@ export default {
     try {
       const payload = await request.json();
 
-      // Wykrycie zapytania wyzwalającego :chart
-      if (payload && (payload.command === ":chart" || payload.content === ":chart")) {
-        await sendChartToDiscord(env, "Komenda :chart");
-        return new Response(JSON.stringify({ success: true, message: "Chart generated and sent to Discord" }), {
+      // Wykrycie komendy /chart lub //c przesłanej w ładunku
+      const cmd = (payload && (payload.command || payload.content || "")).toString().trim().toLowerCase();
+      if (cmd === "/chart" || cmd === "//c" || cmd === ":chart" || cmd === "chart") {
+        await sendChartToDiscord(env, `Komenda ${cmd}`);
+        return new Response(JSON.stringify({ success: true, message: `Chart generated and sent for command ${cmd}` }), {
           status: 200,
           headers: { ...corsHeaders, "Content-Type": "application/json" }
         });
@@ -172,7 +172,7 @@ async function sendChartToDiscord(env, triggerReason) {
       fields: [
         { name: "📊 Suma wizyt (12h)", value: `**${totalVisits}** połączeń`, inline: true },
         { name: "🕒 Czas generowania", value: new Date().toLocaleTimeString("pl-PL"), inline: true },
-        { name: "⚡ Szybki wyzwalacz", value: "Link: `https://flat-dust-8358.3-14-bargiel.workers.dev/chart`", inline: false }
+        { name: "⚡ Szybki wyzwalacz", value: "Komendy: `/chart` lub `//c`\nLink: `https://flat-dust-8358.3-14-bargiel.workers.dev/chart`", inline: false }
       ],
       image: { url: chartUrl },
       footer: { text: "Cloudflare Serverless Bot // urb3x.github.io" },
