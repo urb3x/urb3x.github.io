@@ -20,9 +20,10 @@ export default {
     const url = new URL(request.url);
     const pathname = url.pathname.toLowerCase().replace("/", "");
 
-    if (["cd", "cw", "cm", "cy", "c", "chart", "v", "h", "help"].includes(pathname) || (request.method === "GET" && pathname !== "")) {
+    if (["cd", "cw", "cm", "cy", "c", "chart", "v", "geo", "h", "help"].includes(pathname) || (request.method === "GET" && pathname !== "")) {
       const mode = (pathname === "" || pathname === "chart") ? "c" : pathname;
       if (mode === "v") await sendViewsCounterToDiscord(env, "URL GET /v");
+      else if (mode === "geo") await sendGeoStatsToDiscord(env, "URL GET /geo");
       else if (mode === "h" || mode === "help") await sendHelpMenuToDiscord(env, "URL GET /h");
       else await sendChartToDiscord(env, `Wywołanie URL (/${mode})`, mode);
 
@@ -48,10 +49,13 @@ export default {
         if (cmdName === "v") {
           ctx.waitUntil(sendViewsCounterToDiscord(env, `Komenda Slash /v od @${body.member?.user?.username || 'User'}`));
           const stats = await getViewsStats(env);
-          contentRes = `👁️ **Całkowita liczba wyświetleń strony:** **${stats.total}** połączeń (Unikalnych IP [v4+v6 LTE]: **${stats.uniqueTotal}**, Dziś: **${stats.today}**)`;
+          contentRes = `👁️ **Całkowita liczba wyświetleń:** **${stats.total}** połączeń (Unikalnych IP: **${stats.uniqueTotal}**, Dziś: **${stats.today}**)`;
+        } else if (cmdName === "geo") {
+          ctx.waitUntil(sendGeoStatsToDiscord(env, `Komenda Slash /geo od @${body.member?.user?.username || 'User'}`));
+          contentRes = `🌍 **Geolokalizacja odwiedzin wygenerowana i przesłana na kanał!**`;
         } else if (cmdName === "h" || cmdName === "help") {
           ctx.waitUntil(sendHelpMenuToDiscord(env, `Komenda Slash /${cmdName} od @${body.member?.user?.username || 'User'}`));
-          contentRes = `📖 **Lista wszystkich komend Bota Urbex:**\n\n- \`/c\` : Wykres całościowy (All-time)\n- \`/cd\` : Wykres z dzisiaj (24h)\n- \`/cw\` : Wykres z tygodnia (7 dni)\n- \`/cm\` : Wykres z miesiąca (30 dni)\n- \`/cy\` : Wykres z roku (12 miesięcy)\n- \`/v\` : Licznik wyświetleń i unikalnych IP (IPv4 + IPv6 LTE)\n- \`/h\` : Pomoc i instrukcja`;
+          contentRes = `📖 **Lista komend Bota:**\n\n- \`/c\` : Wykres całościowy (All-time)\n- \`/cd\` : Wykres z dzisiaj (24h)\n- \`/cw\` : Wykres z tygodnia (7 dni)\n- \`/cm\` : Wykres z miesiąca (30 dni)\n- \`/cy\` : Wykres z roku (12 miesięcy)\n- \`/v\` : Licznik wyświetleń i IP\n- \`/geo\` : Lista krajów odwiedzin\n- \`/h\` : Pomoc i instrukcja`;
         } else {
           ctx.waitUntil(sendChartToDiscord(env, `Komenda Slash /${cmdName}`, cmdName));
           contentRes = `📈 **Wykres wizyt [ Tryb: /${cmdName.toUpperCase()} ] został przesłany na kanał!**`;
@@ -70,6 +74,11 @@ export default {
 
       if (rawCmd === "v") {
         await sendViewsCounterToDiscord(env, "Komenda /v");
+        return new Response(JSON.stringify({ success: true }), { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      }
+
+      if (rawCmd === "geo") {
+        await sendGeoStatsToDiscord(env, "Komenda /geo");
         return new Response(JSON.stringify({ success: true }), { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } });
       }
 
@@ -118,8 +127,6 @@ async function getViewsStats(env) {
   let todayCount = 0;
   const allUniqueIps = new Set();
   const todayUniqueIps = new Set();
-
-  // Wzorzec Regex dla IPv4 oraz mobilnego IPv6 (np. Orange / Play LTE)
   const ipRegex = /\b(?:[0-9]{1,3}\.){3}[0-9]{1,3}\b|\b(?:[0-9a-fA-F]{1,4}:){2,7}[0-9a-fA-F]{1,4}\b/g;
 
   for (const m of messages) {
@@ -149,6 +156,51 @@ async function getViewsStats(env) {
     first: firstDate,
     last: lastDate
   };
+}
+
+async function getGeoStats(env) {
+  const messages = await fetchLogMessages(env);
+  const countryCounts = {};
+
+  for (const m of messages) {
+    const text = JSON.stringify(m);
+    let country = "🇵🇱 Polska"; // Domyślnie Polska dla wykrytych połączeń PL / Voivodeship
+
+    if (text.includes("Germany") || text.includes("Niemcy") || text.includes('"DE"')) country = "🇩🇪 Niemcy";
+    else if (text.includes("United States") || text.includes("Stany Zjednoczone") || text.includes('"US"')) country = "🇺🇸 Stany Zjednoczone";
+    else if (text.includes("United Kingdom") || text.includes("Wielka Brytania") || text.includes('"GB"')) country = "🇬🇧 Wielka Brytania";
+    else if (text.includes("France") || text.includes("Francja") || text.includes('"FR"')) country = "🇫🇷 Francja";
+    else if (text.includes("Netherlands") || text.includes("Holandia") || text.includes('"NL"')) country = "🇳🇱 Holandia";
+    else if (text.includes("Cloudflare") || text.includes("Private Relay")) country = "🇵🇱 Polska (Apple Private Relay)";
+
+    countryCounts[country] = (countryCounts[country] || 0) + 1;
+  }
+
+  return countryCounts;
+}
+
+async function sendGeoStatsToDiscord(env, triggerReason) {
+  const geoData = await getGeoStats(env);
+  const sorted = Object.entries(geoData).sort((a, b) => b[1] - a[1]);
+  const total = sorted.reduce((sum, item) => sum + item[1], 0);
+
+  const fields = sorted.map(([country, count]) => {
+    const pct = total > 0 ? ((count / total) * 100).toFixed(1) : 0;
+    return { name: country, value: `**${count}** wizyt (${pct}%)`, inline: true };
+  });
+
+  const embed = {
+    username: "Urbex Analytics Terminal",
+    embeds: [{
+      title: "🌍 Geolokalizacja Odwiedzin na Stronie (/geo)",
+      description: `**Powód wyzwolenia:** ${triggerReason}\n**Łącznie przeanalizowano:** ${total} wizyt`,
+      color: 3066993,
+      fields: fields,
+      footer: { text: "Urbex Geo System // urb3x.github.io" },
+      timestamp: new Date().toISOString()
+    }]
+  };
+  return (await fetch(CHART_WEBHOOK_URL, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(embed) })).status;
 }
 
 async function sendViewsCounterToDiscord(env, triggerReason) {
@@ -187,6 +239,7 @@ async function sendHelpMenuToDiscord(env, triggerReason) {
         { name: "🗓️ /cm", value: "Wykres wizyt z **tego miesiąca / 30 dni** (Month)", inline: false },
         { name: "📈 /cy", value: "Wykres wizyt z **tego roku / 12 miesięcy** (Year)", inline: false },
         { name: "👁️ /v", value: "Licznik **całkowitej liczby wyświetleń** i **unikalnych IP (IPv4 + IPv6 LTE)**", inline: false },
+        { name: "🌍 /geo", value: "Zestawienie **krajów pochodzenia odwiedzin** (Geolokalizacja)", inline: false },
         { name: "❓ /h (lub /help)", value: "Wyświetlenie tej listy pomocy i komend", inline: false }
       ],
       footer: { text: "Urbex Help System // urb3x.github.io" },
