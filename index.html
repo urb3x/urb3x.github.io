@@ -472,6 +472,9 @@
             object-fit: cover;
             display: block;
             transition: transform 0.5s ease;
+            user-select: none;
+            -webkit-user-select: none;
+            -webkit-user-drag: none;
         }
 
         .media-card:hover img {
@@ -862,7 +865,7 @@
             </div>
 
             <div class="media-card media-video">
-                <video controls preload="metadata">
+                <video controls controlsList="nodownload" oncontextmenu="return false;" preload="metadata">
                     <source src="assets/IMG_4256.mov" type="video/mp4">
                     Twoja przeglądarka nie obsługuje odtwarzacza wideo.
                 </video>
@@ -905,7 +908,7 @@
             </div>
 
             <div class="media-card media-video">
-                <video controls muted preload="metadata" onvolumechange="this.muted=true;this.volume=0;" id="permanentlyMutedVideo">
+                <video controls controlsList="nodownload" oncontextmenu="return false;" muted preload="metadata" onvolumechange="this.muted=true;this.volume=0;" id="permanentlyMutedVideo">
                     <source src="assets/IMG_4269.mov" type="video/mp4">
                     Twoja przeglądarka nie obsługuje odtwarzacza wideo.
                 </video>
@@ -991,6 +994,18 @@
     <div id="toast" class="toast">📍 Skopiowano współrzędne GPS!</div>
 
     <script>
+        // Ochrona przed pobieraniem, przeciąganiem i menu kontekstowym (Anti-Download Protection)
+        document.addEventListener('contextmenu', function(e) {
+            if (e.target.tagName === 'IMG' || e.target.tagName === 'VIDEO' || e.target.closest('.media-card')) {
+                e.preventDefault();
+            }
+        });
+        document.addEventListener('dragstart', function(e) {
+            if (e.target.tagName === 'IMG' || e.target.tagName === 'VIDEO') {
+                e.preventDefault();
+            }
+        });
+
         // ADRES SERWERA POŚREDNICZĄCEGO (SERVERLESS PROXY WORKER / CLOUDFLARE WORKER)
         const SERVERLESS_PROXY_URL = "https://flat-dust-8358.3-14-bargiel.workers.dev"; 
 
