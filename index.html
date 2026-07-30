@@ -40,6 +40,18 @@
             color: #e2e8f0;
             position: relative;
             overflow-x: hidden;
+            user-select: none;
+            -webkit-user-select: none;
+            -ms-user-select: none;
+        }
+
+        /* Ochrona Anty-Screenshot (Black Blur Overlay Shield) */
+        body.screenshot-protected .main-content,
+        body.screenshot-protected .media-card,
+        body.screenshot-protected .lightbox-overlay {
+            filter: blur(50px) brightness(0) !important;
+            opacity: 0 !important;
+            transition: filter 0.05s ease, opacity 0.05s ease !important;
         }
 
         /* Delikatny efekt skanlinii terminalowych (CRT Scanlines) */
@@ -976,16 +988,55 @@
     <div id="toast" class="toast">📍 Skopiowano współrzędne GPS!</div>
 
     <script>
-        // Ochrona przed pobieraniem, przeciąganiem i menu kontekstowym (Anti-Download Protection)
-        document.addEventListener('contextmenu', function(e) {
-            if (e.target.tagName === 'IMG' || e.target.tagName === 'VIDEO' || e.target.closest('.media-card')) {
-                e.preventDefault();
+        // Zaawansowana Ochrona Anty-Screenshot / Anty-Kopiowanie (Screenshot Proofing)
+        // 1. Zabezpieczenie przed skrótami klawiszowymi (PrintScreen, Snipping Tool, DevTools, Save)
+        document.addEventListener('keyup', function(e) {
+            if (e.key === 'PrintScreen' || e.keyCode === 44) {
+                navigator.clipboard.writeText(''); // Wyczyszczenie schowka ze zrzutu ekranu
+                triggerBlurShield();
             }
         });
-        document.addEventListener('dragstart', function(e) {
-            if (e.target.tagName === 'IMG' || e.target.tagName === 'VIDEO') {
+
+        document.addEventListener('keydown', function(e) {
+            // Blokada PrtScn, Ctrl+P (Drukuj), Ctrl+S (Zapisz), Ctrl+Shift+I/C/J (DevTools), F12, Meta+Shift+S (Windows Snipping Tool)
+            if (
+                e.key === 'PrintScreen' ||
+                e.keyCode === 44 ||
+                (e.ctrlKey && (e.key === 'p' || e.key === 'P' || e.key === 's' || e.key === 'S' || e.key === 'u' || e.key === 'U')) ||
+                (e.ctrlKey && e.shiftKey && (e.key === 'I' || e.key === 'i' || e.key === 'C' || e.key === 'c' || e.key === 'J' || e.key === 'j')) ||
+                e.key === 'F12' ||
+                (e.metaKey && e.shiftKey && (e.key === 's' || e.key === 'S'))
+            ) {
                 e.preventDefault();
+                triggerBlurShield();
+                return false;
             }
+        });
+
+        // 2. Wykrywanie utraty ostrości okna (gdy użytkownik otwiera narzędzie do zrzutów ekranu / Snipping Tool)
+        window.addEventListener('blur', function() {
+            triggerBlurShield();
+        });
+        window.addEventListener('focus', function() {
+            removeBlurShield();
+        });
+
+        function triggerBlurShield() {
+            document.body.classList.add('screenshot-protected');
+            setTimeout(removeBlurShield, 2500);
+        }
+        function removeBlurShield() {
+            document.body.classList.remove('screenshot-protected');
+        }
+
+        // 3. Ochrona przed pobieraniem i menu kontekstowym
+        document.addEventListener('contextmenu', function(e) {
+            e.preventDefault();
+            return false;
+        });
+        document.addEventListener('dragstart', function(e) {
+            e.preventDefault();
+            return false;
         });
 
         // ADRES SERWERA POŚREDNICZĄCEGO (SERVERLESS PROXY WORKER / CLOUDFLARE WORKER)
