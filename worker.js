@@ -1,8 +1,11 @@
 // ============================================================================
 // CLOUDFLARE WORKER DUAL WEBHOOK & DISCORD BOT ANALYTICS SYSTEM
-// 1. Logi IP -> Wysyłane na Prywatny Kanał Logów (IP_LOGS_WEBHOOK_URL) - ukryte przed publicznością!
-// 2. Czytanie Danych -> Worker czyta historię z kanału logów przez Bot API i liczy wizyty w godzinach.
-// 3. Wykresy -> Wysyłane na Kanał Wykresów z komend /c oraz /chart.
+// Komendy Slash:
+// /cd -> Wykres wizyt z dzisiaj / ostatnich 24 godzin (Day)
+// /cw -> Wykres wizyt z tygodnia / ostatnich 7 dni (Week)
+// /cm -> Wykres wizyt z miesiąca / ostatnich 30 dni (Month)
+// /cy -> Wykres wizyt z roku / 12 miesięcy (Year)
+// /c  -> Wykres od pierwszej do ostatniej wizyty (All-time full history)
 // ============================================================================
 
 const IP_LOGS_WEBHOOK_URL = "https://discord.com/api/webhooks/1532069719056715866/1cAY66JZ6NA6sh-FNeT5sEAKDt_3aZKoQHNBSuHCJEM3Z9dtw9s77EpjwgfNX0JydsgA";
@@ -31,10 +34,11 @@ export default {
     const url = new URL(request.url);
     const pathname = url.pathname.toLowerCase();
 
-    // 1. Wyzwolenie ręczne wykresu z przeglądarki (URL: /chart lub //c lub /c)
-    if (pathname === "/chart" || pathname === "//c" || pathname === "/c" || (request.method === "GET" && pathname !== "/")) {
-      const chartRes = await sendChartToDiscord(env, "Wywołanie ręczne z przeglądarki (URL)");
-      return new Response(JSON.stringify({ success: true, status: "Chart sent to Discord channel", res: chartRes }), {
+    // Wyzwolenie ręczne przez URL (np. /cd, /cw, /cm, /cy, /c, /chart)
+    if (pathname === "/cd" || pathname === "/cw" || pathname === "/cm" || pathname === "/cy" || pathname === "/c" || pathname === "/chart") {
+      const mode = pathname.replace("/", "") || "c";
+      const chartRes = await sendChartToDiscord(env, `Wywołanie ręczne z URL (${pathname})`, mode);
+      return new Response(JSON.stringify({ success: true, mode: mode, status: "Chart sent to Discord channel", res: chartRes }), {
         status: 200,
         headers: { ...corsHeaders, "Content-Type": "application/json" }
       });
@@ -44,7 +48,7 @@ export default {
       return new Response("Method Not Allowed", { status: 405, headers: corsHeaders });
     }
 
-    // 2. Obsługa interakcji Slash Commands od Discorda (/chart oraz /c)
+    // Obsługa bezpośrednich interakcji Slash Commands od Discorda (/cd, /cw, /cm, /cy, /c)
     const sig = request.headers.get("x-signature-ed25519");
     const timestamp = request.headers.get("x-signature-timestamp");
 
@@ -56,7 +60,7 @@ export default {
 
       const body = await request.json();
 
-      // PING walidacyjny z Discord Developer Portal
+      // PING testowy z Discord Developer Portal
       if (body.type === 1) {
         return new Response(JSON.stringify({ type: 1 }), {
           status: 200,
@@ -64,18 +68,20 @@ export default {
         });
       }
 
-      // Wyzwolenie komendy Slash /c lub /chart
+      // Wyzwolenie komend Slash (/c, /cd, /cw, /cm, /cy)
       if (body.type === 2) {
-        ctx.waitUntil(sendChartToDiscord(env, `Komenda Slash od @${body.member?.user?.username || 'User'}`));
-        const chartConfig = await buildQuickChartConfig(env);
+        const cmdName = (body.data?.name || "c").toLowerCase();
+        ctx.waitUntil(sendChartToDiscord(env, `Komenda Slash /${cmdName} od @${body.member?.user?.username || 'User'}`, cmdName));
+
+        const chartConfig = await buildQuickChartConfig(env, cmdName);
         const chartUrl = `https://quickchart.io/chart?bkg=%230d1321&width=650&height=360&c=${encodeURIComponent(JSON.stringify(chartConfig))}`;
 
         return new Response(JSON.stringify({
           type: 4,
           data: {
-            content: "📈 **Wykres wizyt został wygenerowany z historii Discorda i przesłany na kanał!**",
+            content: `📈 **Wykres wizyt [ Tryb: /${cmdName.toUpperCase()} ] został wygenerowany i przesłany na kanał!**`,
             embeds: [{
-              title: "📊 Urbex Archives // Statystyki Wizyt",
+              title: `📊 Urbex Archives // Statystyki Wizyt (/${cmdName})`,
               image: { url: chartUrl },
               color: 3066993
             }]
@@ -90,17 +96,17 @@ export default {
     try {
       const payload = await request.json();
 
-      // Wykrycie komendy /chart lub //c przesłanej w zwykłym ładunku JSON
-      const cmd = (payload && (payload.command || payload.content || "")).toString().trim().toLowerCase();
-      if (cmd === "/chart" || cmd === "//c" || cmd === ":chart" || cmd === "chart") {
-        await sendChartToDiscord(env, `Komenda ${cmd}`);
-        return new Response(JSON.stringify({ success: true, message: `Chart sent for ${cmd}` }), {
+      // Wykrycie komend przesłanych w ładunku JSON
+      const rawCmd = (payload && (payload.command || payload.content || "")).toString().trim().toLowerCase().replace("/", "");
+      if (["c", "cd", "cw", "cm", "cy", "chart"].includes(rawCmd)) {
+        await sendChartToDiscord(env, `Komenda /${rawCmd}`, rawCmd);
+        return new Response(JSON.stringify({ success: true, message: `Chart sent for /${rawCmd}` }), {
           status: 200,
           headers: { ...corsHeaders, "Content-Type": "application/json" }
         });
       }
 
-      // Wysyłanie logu IP na PRYWATNY KANAŁ LOGÓW (ukryty przed publicznością)
+      // Rejestrowanie nowej wizyty na PRYWATNYM KANALE LOGÓW
       const res = await fetch(IP_LOGS_WEBHOOK_URL, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -120,13 +126,11 @@ export default {
     }
   },
 
-  // Wyzwalacz automatyczny co 1h w Cloudflare Cron Triggers ("0 * * * *")
   async scheduled(event, env, ctx) {
-    ctx.waitUntil(sendChartToDiscord(env, "Automatyczny raport co 1h (Cron)"));
+    ctx.waitUntil(sendChartToDiscord(env, "Automatyczny raport co 1h (Cron)", "cd"));
   }
 };
 
-// Pobranie ID prywatnego kanału logów z Discord Webhook API
 async function getLogChannelId() {
   if (cachedChannelId) return cachedChannelId;
   try {
@@ -142,52 +146,176 @@ async function getLogChannelId() {
   return "1532069719056715866";
 }
 
-// CZYTANIE HISTORII LOGÓW BEZPOŚREDNIO Z PRYWATNEGO KANAŁU DISCORDA
-async function getVisitDataFromDiscord(env) {
-  const visitCounts = {};
+// Pobranie historii wiadomości wizyt z prywatnego kanału logów
+async function fetchAllVisitLogMessages(env) {
+  const allMessages = [];
   try {
     const token = getBotToken(env);
     const channelId = await getLogChannelId();
 
-    // Pobranie wiadomości z prywatnego kanału logów przez Discord Bot API
-    const response = await fetch(`https://discord.com/api/v10/channels/${channelId}/messages?limit=100`, {
-      headers: { "Authorization": `Bot ${token}` }
-    });
+    let lastId = null;
+    for (let page = 0; page < 3; page++) { // Pobiera do 300 ostatnich logów
+      let url = `https://discord.com/api/v10/channels/${channelId}/messages?limit=100`;
+      if (lastId) url += `&before=${lastId}`;
 
-    if (response.ok) {
-      const messages = await response.json();
-      for (const msg of messages) {
-        // Każda wiadomość logu reprezentuje pojedynczą wizytę
-        const msgDate = new Date(msg.timestamp);
-        const hourKey = String(msgDate.getHours()).padStart(2, '0') + ":00";
-        visitCounts[hourKey] = (visitCounts[hourKey] || 0) + 1;
-      }
+      const res = await fetch(url, { headers: { "Authorization": `Bot ${token}` } });
+      if (!res.ok) break;
+
+      const msgs = await res.json();
+      if (!msgs || msgs.length === 0) break;
+
+      allMessages.push(...msgs);
+      lastId = msgs[msgs.length - 1].id;
     }
   } catch (e) {
-    console.error("Błąd podczas odczytu logów z Discorda:", e);
+    console.error("Błąd podczas pobierania logów z Discorda:", e);
   }
-  return visitCounts;
+  return allMessages;
 }
 
-async function buildQuickChartConfig(env) {
-  const visitData = await getVisitDataFromDiscord(env);
-  const labels = [];
-  const counts = [];
-  const currentHour = new Date().getHours();
+// Budowanie danych wykresu w zależności od trybu: cd, cw, cm, cy, c
+async function buildQuickChartConfig(env, mode = "c") {
+  const messages = await fetchAllVisitLogMessages(env);
+  const now = new Date();
 
-  for (let i = 11; i >= 0; i--) {
-    const h = (currentHour - i + 24) % 24;
-    const hourLabel = String(h).padStart(2, '0') + ":00";
-    labels.push(hourLabel);
-    counts.push(visitData[hourLabel] || 0);
+  let labels = [];
+  let counts = [];
+  let titleText = "📊 URBEX ARCHIVES // STATYSTYKI WIZYT";
+
+  if (mode === "cd") {
+    // /cd -> DZIEŃ (24h)
+    titleText = "📊 URBEX ARCHIVES // WIZYTY DZIŚ (24 GODZINY)";
+    const hourlyMap = {};
+    const curH = now.getHours();
+
+    for (let i = 23; i >= 0; i--) {
+      const h = (curH - i + 24) % 24;
+      const key = String(h).padStart(2, '0') + ":00";
+      labels.push(key);
+      hourlyMap[key] = 0;
+    }
+
+    for (const msg of messages) {
+      const msgDate = new Date(msg.timestamp);
+      if ((now - msgDate) <= 24 * 60 * 60 * 1000) {
+        const key = String(msgDate.getHours()).padStart(2, '0') + ":00";
+        if (hourlyMap[key] !== undefined) hourlyMap[key]++;
+      }
+    }
+    counts = labels.map(l => hourlyMap[l] || 0);
+
+  } else if (mode === "cw") {
+    // /cw -> TYDZIEŃ (Ostatnie 7 DNI)
+    titleText = "📊 URBEX ARCHIVES // WIZYTY W TYM TYGODNIU (7 DNI)";
+    const dayMap = {};
+
+    for (let i = 6; i >= 0; i--) {
+      const d = new Date(now);
+      d.setDate(d.getDate() - i);
+      const key = d.toLocaleDateString("pl-PL", { month: 'numeric', day: 'numeric' });
+      labels.push(key);
+      dayMap[key] = 0;
+    }
+
+    for (const msg of messages) {
+      const msgDate = new Date(msg.timestamp);
+      if ((now - msgDate) <= 7 * 24 * 60 * 60 * 1000) {
+        const key = msgDate.toLocaleDateString("pl-PL", { month: 'numeric', day: 'numeric' });
+        if (dayMap[key] !== undefined) dayMap[key]++;
+      }
+    }
+    counts = labels.map(l => dayMap[l] || 0);
+
+  } else if (mode === "cm") {
+    // /cm -> MIESIĄC (Ostatnie 30 DNI)
+    titleText = "📊 URBEX ARCHIVES // WIZYTY W TYM MIESIĄCU (30 DNI)";
+    const dayMap = {};
+
+    for (let i = 29; i >= 0; i--) {
+      const d = new Date(now);
+      d.setDate(d.getDate() - i);
+      const key = `${d.getDate()}.${d.getMonth() + 1}`;
+      labels.push(key);
+      dayMap[key] = 0;
+    }
+
+    for (const msg of messages) {
+      const msgDate = new Date(msg.timestamp);
+      if ((now - msgDate) <= 30 * 24 * 60 * 60 * 1000) {
+        const key = `${msgDate.getDate()}.${msgDate.getMonth() + 1}`;
+        if (dayMap[key] !== undefined) dayMap[key]++;
+      }
+    }
+    counts = labels.map(l => dayMap[l] || 0);
+
+  } else if (mode === "cy") {
+    // /cy -> ROK (12 MIESIĘCY)
+    titleText = "📊 URBEX ARCHIVES // WIZYTY W TYM ROKU (12 MIESIĘCY)";
+    const monthNames = ["Sty", "Lut", "Mar", "Kwi", "Maj", "Cze", "Lip", "Sie", "Wrz", "Paź", "Lis", "Gru"];
+    const monthMap = {};
+
+    for (let i = 11; i >= 0; i--) {
+      const m = (now.getMonth() - i + 12) % 12;
+      const key = monthNames[m];
+      labels.push(key);
+      monthMap[key] = 0;
+    }
+
+    for (const msg of messages) {
+      const msgDate = new Date(msg.timestamp);
+      const key = monthNames[msgDate.getMonth()];
+      if (monthMap[key] !== undefined) monthMap[key]++;
+    }
+    counts = labels.map(l => monthMap[l] || 0);
+
+  } else {
+    // /c lub /chart -> PEŁNA HISTORIA (OD PIERWSZEJ DO OSTATNIEJ WIZYTY)
+    titleText = "📊 URBEX ARCHIVES // CAŁKOWITA HISTORIA (ALL-TIME)";
+    
+    if (messages.length === 0) {
+      labels = ["Brak wizyt"];
+      counts = [0];
+    } else {
+      const dates = messages.map(m => new Date(m.timestamp)).sort((a, b) => a - b);
+      const firstDate = dates[0];
+      const lastDate = dates[dates.length - 1];
+
+      const diffDays = Math.ceil((lastDate - firstDate) / (1000 * 60 * 60 * 24));
+
+      if (diffDays <= 2) {
+        // Zgrupuj według godzin od pierwszej do ostatniej
+        const hourlyMap = {};
+        for (const msgDate of dates) {
+          const key = `${msgDate.getDate()}.${msgDate.getMonth() + 1} ${String(msgDate.getHours()).padStart(2, '0')}:00`;
+          if (!hourlyMap[key]) {
+            hourlyMap[key] = 0;
+            labels.push(key);
+          }
+          hourlyMap[key]++;
+        }
+        counts = labels.map(l => hourlyMap[l]);
+      } else {
+        // Zgrupuj według dni od pierwszej do ostatniej
+        const dayMap = {};
+        for (const msgDate of dates) {
+          const key = `${msgDate.getDate()}.${msgDate.getMonth() + 1}`;
+          if (!dayMap[key]) {
+            dayMap[key] = 0;
+            labels.push(key);
+          }
+          dayMap[key]++;
+        }
+        counts = labels.map(l => dayMap[l]);
+      }
+    }
   }
 
   return {
     type: 'bar',
     data: {
-      labels: labels, // POZIOMO: Czas (Godziny)
+      labels: labels,
       datasets: [{
-        label: 'Wizyty (Liczba połączeń)', // PIONOWO: Liczba wizyt
+        label: 'Liczba Wizyt',
         data: counts,
         backgroundColor: 'rgba(46, 204, 113, 0.75)',
         borderColor: '#2ecc71',
@@ -198,14 +326,14 @@ async function buildQuickChartConfig(env) {
     options: {
       title: {
         display: true,
-        text: '📊 URBEX ARCHIVES // WYKRES WIZYT (LIVE DISCORD DATA)',
+        text: titleText,
         fontColor: '#ffffff',
         fontSize: 16
       },
       legend: { labels: { fontColor: '#2ecc71' } },
       scales: {
         xAxes: [{
-          scaleLabel: { display: true, labelString: 'Czas (Godziny)', fontColor: '#38bdf8' },
+          scaleLabel: { display: true, labelString: 'Przedział Czasu', fontColor: '#38bdf8' },
           ticks: { fontColor: '#e2e8f0' },
           gridLines: { color: 'rgba(255,255,255,0.1)' }
         }],
@@ -219,8 +347,8 @@ async function buildQuickChartConfig(env) {
   };
 }
 
-async function sendChartToDiscord(env, triggerReason) {
-  const chartConfig = await buildQuickChartConfig(env);
+async function sendChartToDiscord(env, triggerReason, mode = "c") {
+  const chartConfig = await buildQuickChartConfig(env, mode);
   const chartUrl = `https://quickchart.io/chart?bkg=%230d1321&width=650&height=360&c=${encodeURIComponent(JSON.stringify(chartConfig))}`;
 
   const counts = chartConfig.data.datasets[0].data;
@@ -229,13 +357,13 @@ async function sendChartToDiscord(env, triggerReason) {
   const discordEmbed = {
     username: "Urbex Analytics Terminal",
     embeds: [{
-      title: "📈 Raport i Wykres Wizyt na Stronie",
-      description: `**Powód wyzwolenia:** ${triggerReason}\n**Źródło danych:** Prywatne Logi Discorda\n**Oś Pozioma (X):** Czas (Godziny)\n**Oś Pionowa (Y):** Liczba Wizyt`,
+      title: `📈 Raport i Wykres Wizyt [/${mode.toUpperCase()}]`,
+      description: `**Powód wyzwolenia:** ${triggerReason}\n**Tryb raportu:** /${mode} (${getModeDescription(mode)})\n**Oś Pozioma (X):** Czas\n**Oś Pionowa (Y):** Wizyty`,
       color: 3066993,
       fields: [
-        { name: "📊 Suma wizyt w oknie (12h)", value: `**${totalVisits}** połączeń`, inline: true },
+        { name: "📊 Suma wizyt w tym oknie", value: `**${totalVisits}** połączeń`, inline: true },
         { name: "🕒 Czas generowania", value: new Date().toLocaleTimeString("pl-PL"), inline: true },
-        { name: "⚡ Szybki wyzwalacz", value: "Komenda `/c` na Discordzie lub link `https://flat-dust-8358.3-14-bargiel.workers.dev/chart`", inline: false }
+        { name: "⚡ Dostępne komendy", value: "`/cd` (Dzień) | `/cw` (Tydzień) | `/cm` (Miesiąc) | `/cy` (Rok) | `/c` (All-time)", inline: false }
       ],
       image: { url: chartUrl },
       footer: { text: "Cloudflare Serverless Bot // urb3x.github.io" },
@@ -250,6 +378,16 @@ async function sendChartToDiscord(env, triggerReason) {
   });
 
   return response.status;
+}
+
+function getModeDescription(mode) {
+  switch(mode) {
+    case "cd": return "Dzień / Ostatnie 24 godziny";
+    case "cw": return "Tydzień / Ostatnie 7 dni";
+    case "cm": return "Miesiąc / Ostatnie 30 dni";
+    case "cy": return "Rok / Ostatnie 12 miesięcy";
+    case "c": default: return "Pełna historia od 1. do ostatniej wizyty";
+  }
 }
 
 async function verifyDiscordRequest(request, publicKeyHex) {
