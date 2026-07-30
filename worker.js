@@ -20,9 +20,12 @@ export default {
     const url = new URL(request.url);
     const pathname = url.pathname.toLowerCase().replace("/", "");
 
-    if (["cd", "cw", "cm", "cy", "c", "chart"].includes(pathname) || (request.method === "GET" && pathname !== "")) {
+    if (["cd", "cw", "cm", "cy", "c", "chart", "v", "h", "help"].includes(pathname) || (request.method === "GET" && pathname !== "")) {
       const mode = (pathname === "" || pathname === "chart") ? "c" : pathname;
-      await sendChartToDiscord(env, `Wywołanie URL (/${mode})`, mode);
+      if (mode === "v") await sendViewsCounterToDiscord(env, "URL GET /v");
+      else if (mode === "h" || mode === "help") await sendHelpMenuToDiscord(env, "URL GET /h");
+      else await sendChartToDiscord(env, `Wywołanie URL (/${mode})`, mode);
+
       return new Response(JSON.stringify({ success: true, mode }), { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
@@ -40,16 +43,23 @@ export default {
 
       if (body.type === 2) {
         const cmdName = (body.data?.name || "c").toLowerCase();
-        ctx.waitUntil(sendChartToDiscord(env, `Komenda Slash /${cmdName}`, cmdName));
-        const chartConfig = await buildQuickChartConfig(env, cmdName);
-        const chartUrl = `https://quickchart.io/chart?bkg=%230d1321&width=650&height=360&c=${encodeURIComponent(JSON.stringify(chartConfig))}`;
+        let contentRes = "";
+
+        if (cmdName === "v") {
+          ctx.waitUntil(sendViewsCounterToDiscord(env, `Komenda Slash /v od @${body.member?.user?.username || 'User'}`));
+          const stats = await getViewsStats(env);
+          contentRes = `👁️ **Całkowita liczba wyświetleń strony:** **${stats.total}** połączeń (Dziś: **${stats.today}**)`;
+        } else if (cmdName === "h" || cmdName === "help") {
+          ctx.waitUntil(sendHelpMenuToDiscord(env, `Komenda Slash /${cmdName} od @${body.member?.user?.username || 'User'}`));
+          contentRes = `📖 **Lista wszystkich komend Bota Urbex:**\n\n- \`/c\` : Wykres całościowy (All-time)\n- \`/cd\` : Wykres z dzisiaj (24h)\n- \`/cw\` : Wykres z tygodnia (7 dni)\n- \`/cm\` : Wykres z miesiąca (30 dni)\n- \`/cy\` : Wykres z roku (12 miesięcy)\n- \`/v\` : Licznik wyświetleń (Views counter)\n- \`/h\` : Pomoc i instrukcja`;
+        } else {
+          ctx.waitUntil(sendChartToDiscord(env, `Komenda Slash /${cmdName}`, cmdName));
+          contentRes = `📈 **Wykres wizyt [ Tryb: /${cmdName.toUpperCase()} ] został przesłany na kanał!**`;
+        }
 
         return new Response(JSON.stringify({
           type: 4,
-          data: {
-            content: `📈 **Wykres wizyt [ Tryb: /${cmdName.toUpperCase()} ] został wygenerowany z historii logów i przesłany!**`,
-            embeds: [{ title: `📊 Urbex Archives // Statystyki Wizyt (/${cmdName})`, image: { url: chartUrl }, color: 3066993 }]
-          }
+          data: { content: contentRes }
         }), { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } });
       }
     }
@@ -57,6 +67,17 @@ export default {
     try {
       const payload = await request.json();
       const rawCmd = (payload && (payload.command || payload.content || "")).toString().trim().toLowerCase().replace("/", "");
+
+      if (rawCmd === "v") {
+        await sendViewsCounterToDiscord(env, "Komenda /v");
+        return new Response(JSON.stringify({ success: true }), { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      }
+
+      if (rawCmd === "h" || rawCmd === "help" || rawCmd === "?") {
+        await sendHelpMenuToDiscord(env, `Komenda /${rawCmd}`);
+        return new Response(JSON.stringify({ success: true }), { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      }
+
       if (["c", "cd", "cw", "cm", "cy", "chart"].includes(rawCmd)) {
         await sendChartToDiscord(env, `Komenda /${rawCmd}`, rawCmd);
         return new Response(JSON.stringify({ success: true }), { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } });
@@ -89,6 +110,71 @@ async function fetchLogMessages(env) {
     if (res.ok) msgs.push(...await res.json());
   } catch (e) {}
   return msgs;
+}
+
+async function getViewsStats(env) {
+  const messages = await fetchLogMessages(env);
+  const now = new Date();
+  let todayCount = 0;
+
+  for (const m of messages) {
+    const d = new Date(m.timestamp);
+    if (now - d <= 86400000) todayCount++;
+  }
+
+  const firstDate = messages.length > 0 ? new Date(messages[messages.length - 1].timestamp).toLocaleString("pl-PL") : "Brak";
+  const lastDate  = messages.length > 0 ? new Date(messages[0].timestamp).toLocaleString("pl-PL") : "Brak";
+
+  return {
+    total: messages.length,
+    today: todayCount,
+    first: firstDate,
+    last: lastDate
+  };
+}
+
+async function sendViewsCounterToDiscord(env, triggerReason) {
+  const stats = await getViewsStats(env);
+  const embed = {
+    username: "Urbex Analytics Terminal",
+    embeds: [{
+      title: "👁️ Licznik Wyświetleń i Wizyt na Stronie (/v)",
+      description: `**Powód wyzwolenia:** ${triggerReason}`,
+      color: 3066993,
+      fields: [
+        { name: "📊 Łącznie wyświetleń (All-time)", value: `**${stats.total}** odwiedzin`, inline: true },
+        { name: "🔥 Wizyty w ostatnich 24h", value: `**${stats.today}** odwiedzin`, inline: true },
+        { name: "🗓️ Pierwsza zarejestrowana wizyta", value: stats.first, inline: false },
+        { name: "🕒 Ostatnia zarejestrowana wizyta", value: stats.last, inline: false }
+      ],
+      footer: { text: "Urbex Counter Bot // urb3x.github.io" },
+      timestamp: new Date().toISOString()
+    }]
+  };
+  return (await fetch(CHART_WEBHOOK_URL, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(embed) })).status;
+}
+
+async function sendHelpMenuToDiscord(env, triggerReason) {
+  const embed = {
+    username: "Urbex Analytics Terminal",
+    embeds: [{
+      title: "📖 Lista Komend Bota Urbex (/h)",
+      description: `**Powód wyzwolenia:** ${triggerReason}\n\nOto pełny wykaz komend dostępnych na serwerze:`,
+      color: 3066993,
+      fields: [
+        { name: "📊 /c", value: "Wykres wizyt od **pierwszej do ostatniej** (All-time full history)", inline: false },
+        { name: "📅 /cd", value: "Wykres wizyt z **dzisiaj / ostatnich 24 godzin** (Day)", inline: false },
+        { name: "📆 /cw", value: "Wykres wizyt z **tego tygodnia / 7 dni** (Week)", inline: false },
+        { name: "🗓️ /cm", value: "Wykres wizyt z **tego miesiąca / 30 dni** (Month)", inline: false },
+        { name: "📈 /cy", value: "Wykres wizyt z **tego roku / 12 miesięcy** (Year)", inline: false },
+        { name: "👁️ /v", value: "Licznik **całkowitej liczby wyświetleń** i wizyt (Views counter)", inline: false },
+        { name: "❓ /h (lub /help)", value: "Wyświetlenie tej listy pomocy i komend", inline: false }
+      ],
+      footer: { text: "Urbex Help System // urb3x.github.io" },
+      timestamp: new Date().toISOString()
+    }]
+  };
+  return (await fetch(CHART_WEBHOOK_URL, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(embed) })).status;
 }
 
 async function buildQuickChartConfig(env, mode = "c") {
