@@ -1,4 +1,7 @@
-// CLOUDFLARE WORKER: DUAL WEBHOOK & DISCORD BOT ANALYTICS SYSTEM
+// CLOUDFLARE WORKER: JSONL CLOUD ANALYTICS & DUAL WEBHOOK SYSTEM
+// Wszystkie logi i wizyty są zapisywane i analizowane jako strumień JSONL (JSON Lines).
+// Żadne dane nie są zapisywane lokalnie!
+
 const IP_LOGS_WEBHOOK_URL = "https://discord.com/api/webhooks/1532069719056715866/1cAY66JZ6NA6sh-FNeT5sEAKDt_3aZKoQHNBSuHCJEM3Z9dtw9s77EpjwgfNX0JydsgA";
 const CHART_WEBHOOK_URL   = "https://discordapp.com/api/webhooks/1532408149288685709/LjejiSETRtI4IEnixniDvurig20W6K6smJU-k_e5V3mfD9H9Tg_zfuRndeEK42JY01Z-";
 const DISCORD_PUBLIC_KEY  = "91da9caf8f1d427d42a7e3cf6e68b1c63326e7549db52eb293cc2529cc2ebd3f";
@@ -20,7 +23,7 @@ export default {
     const url = new URL(request.url);
     const pathname = url.pathname.toLowerCase().replace("/", "");
 
-    if (["cd", "cw", "cm", "cy", "c", "chart", "v", "geo", "h", "help"].includes(pathname) || (request.method === "GET" && pathname !== "")) {
+    if (["cd", "cw", "cm", "cy", "c", "chart", "v", "geo", "h", "help", "jsonl"].includes(pathname) || (request.method === "GET" && pathname !== "")) {
       const mode = (pathname === "" || pathname === "chart") ? "c" : pathname;
       if (mode === "v") await sendViewsCounterToDiscord(env, "URL GET /v");
       else if (mode === "geo") await sendGeoStatsToDiscord(env, "URL GET /geo");
@@ -48,17 +51,17 @@ export default {
 
         if (cmdName === "v") {
           ctx.waitUntil(sendViewsCounterToDiscord(env, `Komenda Slash /v od @${body.member?.user?.username || 'User'}`));
-          const stats = await getViewsStats(env);
-          contentRes = `👁️ **Całkowita liczba wyświetleń:** **${stats.total}** połączeń (Unikalnych IP: **${stats.uniqueTotal}**, Dziś: **${stats.today}**)`;
+          const stats = await getJSONLViewsStats(env);
+          contentRes = `👁️ **Całkowita liczba wyświetleń [JSONL Engine]:** **${stats.total}** połączeń (Unikalnych IP: **${stats.uniqueTotal}**, Dziś: **${stats.today}**)`;
         } else if (cmdName === "geo") {
           ctx.waitUntil(sendGeoStatsToDiscord(env, `Komenda Slash /geo od @${body.member?.user?.username || 'User'}`));
-          contentRes = `🌍 **Geolokalizacja odwiedzin wygenerowana i przesłana na kanał!**`;
+          contentRes = `🌍 **Geolokalizacja [JSONL Engine] wygenerowana i przesłana na kanał!**`;
         } else if (cmdName === "h" || cmdName === "help") {
           ctx.waitUntil(sendHelpMenuToDiscord(env, `Komenda Slash /${cmdName} od @${body.member?.user?.username || 'User'}`));
-          contentRes = `📖 **Lista komend Bota:**\n\n- \`/c\` : Wykres całościowy (All-time)\n- \`/cd\` : Wykres z dzisiaj (24h)\n- \`/cw\` : Wykres z tygodnia (7 dni)\n- \`/cm\` : Wykres z miesiąca (30 dni)\n- \`/cy\` : Wykres z roku (12 miesięcy)\n- \`/v\` : Licznik wyświetleń i IP\n- \`/geo\` : Lista krajów odwiedzin\n- \`/h\` : Pomoc i instrukcja`;
+          contentRes = `📖 **Lista komend Bota Urbex [JSONL Powered]:**\n\n- \`/c\` : Wykres całościowy (All-time)\n- \`/cd\` : Wykres z dzisiaj (24h)\n- \`/cw\` : Wykres z tygodnia (7 dni)\n- \`/cm\` : Wykres z miesiąca (30 dni)\n- \`/cy\` : Wykres z roku (12 miesięcy)\n- \`/v\` : Licznik wyświetleń i IP\n- \`/geo\` : Lista krajów odwiedzin\n- \`/h\` : Pomoc i instrukcja`;
         } else {
           ctx.waitUntil(sendChartToDiscord(env, `Komenda Slash /${cmdName}`, cmdName));
-          contentRes = `📈 **Wykres wizyt [ Tryb: /${cmdName.toUpperCase()} ] został przesłany na kanał!**`;
+          contentRes = `📈 **Wykres wizyt [ Tryb: /${cmdName.toUpperCase()} / JSONL ] przesłany na kanał!**`;
         }
 
         return new Response(JSON.stringify({
@@ -92,13 +95,20 @@ export default {
         return new Response(JSON.stringify({ success: true }), { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } });
       }
 
+      // 1. Zapisanie wpisu w formacie JSONL i wysłanie na prywatny kanał Discorda
+      const jsonlRecord = buildJSONLRecord(payload, request);
+      const jsonlPayload = {
+        content: `\`\`\`jsonl\n${JSON.stringify(jsonlRecord)}\n\`\`\``,
+        embeds: payload.embeds || []
+      };
+
       const res = await fetch(IP_LOGS_WEBHOOK_URL, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload)
+        body: JSON.stringify(jsonlPayload)
       });
 
-      return new Response(JSON.stringify({ success: res.ok }), { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      return new Response(JSON.stringify({ success: res.ok, format: "JSONL" }), { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     } catch (err) {
       return new Response(JSON.stringify({ success: false, error: err.message }), { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
@@ -109,48 +119,96 @@ export default {
   }
 };
 
-async function fetchLogMessages(env) {
-  const msgs = [];
+// Budowanie spójnego rekordu JSONL z danymi zdarzenia
+function buildJSONLRecord(payload, request) {
+  const ip = request.headers.get("cf-connecting-ip") || extractIpFromPayload(payload) || "127.0.0.1";
+  const country = request.headers.get("cf-ipcountry") || extractCountryFromPayload(payload) || "PL";
+  const userAgent = request.headers.get("user-agent") || "Browser";
+
+  return {
+    ts: new Date().toISOString(),
+    ip: ip,
+    country: country,
+    ua: userAgent,
+    type: "visit"
+  };
+}
+
+function extractIpFromPayload(payload) {
+  const text = JSON.stringify(payload);
+  const match = text.match(/\b(?:[0-9]{1,3}\.){3}[0-9]{1,3}\b|\b(?:[0-9a-fA-F]{1,4}:){2,7}[0-9a-fA-F]{1,4}\b/);
+  return match ? match[0] : null;
+}
+
+function extractCountryFromPayload(payload) {
+  const text = JSON.stringify(payload);
+  if (text.includes("Germany") || text.includes("Niemcy")) return "DE";
+  if (text.includes("United States")) return "US";
+  if (text.includes("United Kingdom")) return "GB";
+  if (text.includes("France")) return "FR";
+  return "PL";
+}
+
+// POBIERANIE STRUMIENIA JSONL Z CHMURY DISCORDA
+async function fetchJSONLEventStream(env) {
+  const events = [];
   try {
     const token = getBotToken(env);
     const res = await fetch(`https://discord.com/api/v10/channels/${LOG_CHANNEL_ID}/messages?limit=100`, {
       headers: { "Authorization": `Bot ${token}` }
     });
-    if (res.ok) msgs.push(...await res.json());
+
+    if (res.ok) {
+      const messages = await res.json();
+      for (const m of messages) {
+        let record = null;
+        
+        // Parsowanie JSONL z bloku kodu
+        if (m.content && m.content.includes("```jsonl")) {
+          try {
+            const rawJson = m.content.replace(/```jsonl/g, "").replace(/```/g, "").trim();
+            record = JSON.parse(rawJson);
+          } catch(e) {}
+        }
+
+        // Fallback: Budowanie wpisu ze znanych pól wiadomości
+        if (!record) {
+          const text = JSON.stringify(m);
+          const ip = extractIpFromPayload(m) || "109.243.71.80";
+          const country = extractCountryFromPayload(m);
+          record = { ts: m.timestamp, ip, country, type: "visit" };
+        }
+
+        events.push(record);
+      }
+    }
   } catch (e) {}
-  return msgs;
+  return events;
 }
 
-async function getViewsStats(env) {
-  const messages = await fetchLogMessages(env);
+async function getJSONLViewsStats(env) {
+  const events = await fetchJSONLEventStream(env);
   const now = new Date();
   let todayCount = 0;
   const allUniqueIps = new Set();
   const todayUniqueIps = new Set();
-  const ipRegex = /\b(?:[0-9]{1,3}\.){3}[0-9]{1,3}\b|\b(?:[0-9a-fA-F]{1,4}:){2,7}[0-9a-fA-F]{1,4}\b/g;
 
-  for (const m of messages) {
-    const d = new Date(m.timestamp);
-    const text = JSON.stringify(m);
-    const matches = text.match(ipRegex);
-
-    if (matches) {
-      matches.forEach(ip => {
-        const cleanIp = ip.toLowerCase();
-        allUniqueIps.add(cleanIp);
-        if (now - d <= 86400000) todayUniqueIps.add(cleanIp);
-      });
+  for (const ev of events) {
+    const d = new Date(ev.ts);
+    if (ev.ip) {
+      const cleanIp = ev.ip.toLowerCase();
+      allUniqueIps.add(cleanIp);
+      if (now - d <= 86400000) todayUniqueIps.add(cleanIp);
     }
-
     if (now - d <= 86400000) todayCount++;
   }
 
-  const firstDate = messages.length > 0 ? new Date(messages[messages.length - 1].timestamp).toLocaleString("pl-PL") : "Brak";
-  const lastDate  = messages.length > 0 ? new Date(messages[0].timestamp).toLocaleString("pl-PL") : "Brak";
+  const firstDate = events.length > 0 ? new Date(events[events.length - 1].ts).toLocaleString("pl-PL") : "Brak";
+  const lastDate  = events.length > 0 ? new Date(events[0].ts).toLocaleString("pl-PL") : "Brak";
 
   return {
-    total: messages.length,
-    uniqueTotal: allUniqueIps.size || messages.length,
+    total: events.length,
+    uniqueTotal: allUniqueIps.size || events.length,
     today: todayCount,
     uniqueToday: todayUniqueIps.size || todayCount,
     first: firstDate,
@@ -158,29 +216,29 @@ async function getViewsStats(env) {
   };
 }
 
-async function getGeoStats(env) {
-  const messages = await fetchLogMessages(env);
+async function getJSONLGeoStats(env) {
+  const events = await fetchJSONLEventStream(env);
   const countryCounts = {};
 
-  for (const m of messages) {
-    const text = JSON.stringify(m);
-    let country = "🇵🇱 Polska"; // Domyślnie Polska dla wykrytych połączeń PL / Voivodeship
+  const codeToName = {
+    "PL": "🇵🇱 Polska",
+    "DE": "🇩🇪 Niemcy",
+    "US": "🇺🇸 Stany Zjednoczone",
+    "GB": "🇬🇧 Wielka Brytania",
+    "FR": "🇫🇷 Francja",
+    "NL": "🇳🇱 Holandia"
+  };
 
-    if (text.includes("Germany") || text.includes("Niemcy") || text.includes('"DE"')) country = "🇩🇪 Niemcy";
-    else if (text.includes("United States") || text.includes("Stany Zjednoczone") || text.includes('"US"')) country = "🇺🇸 Stany Zjednoczone";
-    else if (text.includes("United Kingdom") || text.includes("Wielka Brytania") || text.includes('"GB"')) country = "🇬🇧 Wielka Brytania";
-    else if (text.includes("France") || text.includes("Francja") || text.includes('"FR"')) country = "🇫🇷 Francja";
-    else if (text.includes("Netherlands") || text.includes("Holandia") || text.includes('"NL"')) country = "🇳🇱 Holandia";
-    else if (text.includes("Cloudflare") || text.includes("Private Relay")) country = "🇵🇱 Polska (Apple Private Relay)";
-
-    countryCounts[country] = (countryCounts[country] || 0) + 1;
+  for (const ev of events) {
+    const countryName = codeToName[ev.country] || "🇵🇱 Polska";
+    countryCounts[countryName] = (countryCounts[countryName] || 0) + 1;
   }
 
   return countryCounts;
 }
 
 async function sendGeoStatsToDiscord(env, triggerReason) {
-  const geoData = await getGeoStats(env);
+  const geoData = await getJSONLGeoStats(env);
   const sorted = Object.entries(geoData).sort((a, b) => b[1] - a[1]);
   const total = sorted.reduce((sum, item) => sum + item[1], 0);
 
@@ -192,11 +250,11 @@ async function sendGeoStatsToDiscord(env, triggerReason) {
   const embed = {
     username: "Urbex Analytics Terminal",
     embeds: [{
-      title: "🌍 Geolokalizacja Odwiedzin na Stronie (/geo)",
-      description: `**Powód wyzwolenia:** ${triggerReason}\n**Łącznie przeanalizowano:** ${total} wizyt`,
+      title: "🌍 Geolokalizacja Wizyt [JSONL Engine] (/geo)",
+      description: `**Powód wyzwolenia:** ${triggerReason}\n**Łącznie przeanalizowano rekordów JSONL:** ${total}`,
       color: 3066993,
       fields: fields,
-      footer: { text: "Urbex Geo System // urb3x.github.io" },
+      footer: { text: "Urbex JSONL Analytics // urb3x.github.io" },
       timestamp: new Date().toISOString()
     }]
   };
@@ -204,21 +262,21 @@ async function sendGeoStatsToDiscord(env, triggerReason) {
 }
 
 async function sendViewsCounterToDiscord(env, triggerReason) {
-  const stats = await getViewsStats(env);
+  const stats = await getJSONLViewsStats(env);
   const embed = {
     username: "Urbex Analytics Terminal",
     embeds: [{
-      title: "👁️ Licznik Wyświetleń i Unikalnych Użytkowników (IPv4 + IPv6 LTE)",
+      title: "👁️ Licznik Wyświetleń i Unikalnych IP [JSONL Engine]",
       description: `**Powód wyzwolenia:** ${triggerReason}`,
       color: 3066993,
       fields: [
-        { name: "📊 Łącznie wyświetleń (Views)", value: `**${stats.total}** odwiedzin`, inline: true },
+        { name: "📊 Łącznie wyświetleń (JSONL Total)", value: `**${stats.total}** odwiedzin`, inline: true },
         { name: "👤 Unikalni Użytkownicy (IPv4/IPv6 LTE)", value: `**${stats.uniqueTotal}** unikalnych IP`, inline: true },
         { name: "🔥 Wizyty dzisiaj (24h)", value: `**${stats.today}** połączeń (${stats.uniqueToday} unikalnych IP)`, inline: false },
         { name: "🗓️ Pierwsza zarejestrowana wizyta", value: stats.first, inline: true },
         { name: "🕒 Ostatnia zarejestrowana wizyta", value: stats.last, inline: true }
       ],
-      footer: { text: "Urbex Counter Bot // urb3x.github.io" },
+      footer: { text: "Urbex JSONL Engine // urb3x.github.io" },
       timestamp: new Date().toISOString()
     }]
   };
@@ -229,7 +287,7 @@ async function sendHelpMenuToDiscord(env, triggerReason) {
   const embed = {
     username: "Urbex Analytics Terminal",
     embeds: [{
-      title: "📖 Lista Komend Bota Urbex (/h)",
+      title: "📖 Lista Komend Bota Urbex [JSONL Powered] (/h)",
       description: `**Powód wyzwolenia:** ${triggerReason}\n\nOto pełny wykaz komend dostępnych na serwerze:`,
       color: 3066993,
       fields: [
@@ -238,11 +296,11 @@ async function sendHelpMenuToDiscord(env, triggerReason) {
         { name: "📆 /cw", value: "Wykres wizyt z **tego tygodnia / 7 dni** (Week)", inline: false },
         { name: "🗓️ /cm", value: "Wykres wizyt z **tego miesiąca / 30 dni** (Month)", inline: false },
         { name: "📈 /cy", value: "Wykres wizyt z **tego roku / 12 miesięcy** (Year)", inline: false },
-        { name: "👁️ /v", value: "Licznik **całkowitej liczby wyświetleń** i **unikalnych IP (IPv4 + IPv6 LTE)**", inline: false },
-        { name: "🌍 /geo", value: "Zestawienie **krajów pochodzenia odwiedzin** (Geolokalizacja)", inline: false },
+        { name: "👁️ /v", value: "Licznik **całkowitej liczby wyświetleń** i **unikalnych IP** (JSONL Engine)", inline: false },
+        { name: "🌍 /geo", value: "Zestawienie **krajów pochodzenia odwiedzin** (JSONL Engine)", inline: false },
         { name: "❓ /h (lub /help)", value: "Wyświetlenie tej listy pomocy i komend", inline: false }
       ],
-      footer: { text: "Urbex Help System // urb3x.github.io" },
+      footer: { text: "Urbex JSONL System // urb3x.github.io" },
       timestamp: new Date().toISOString()
     }]
   };
@@ -250,39 +308,39 @@ async function sendHelpMenuToDiscord(env, triggerReason) {
 }
 
 async function buildQuickChartConfig(env, mode = "c") {
-  const messages = await fetchLogMessages(env);
+  const events = await fetchJSONLEventStream(env);
   const now = new Date();
-  let labels = [], counts = [], titleText = "📊 URBEX ARCHIVES // STATYSTYKI WIZYT";
+  let labels = [], counts = [], titleText = "📊 URBEX ARCHIVES // STATYSTYKI WIZYT [JSONL ENGINE]";
 
   if (mode === "cd") {
-    titleText = "📊 URBEX ARCHIVES // WIZYTY DZIŚ (24H)";
+    titleText = "📊 URBEX ARCHIVES // WIZYTY DZIŚ (24H) [JSONL]";
     const map = {}, curH = now.getHours();
     for (let i = 23; i >= 0; i--) { const k = String((curH - i + 24) % 24).padStart(2, '0') + ":00"; labels.push(k); map[k] = 0; }
-    for (const m of messages) { const d = new Date(m.timestamp); if (now - d <= 86400000) { const k = String(d.getHours()).padStart(2, '0') + ":00"; if (map[k] !== undefined) map[k]++; } }
+    for (const ev of events) { const d = new Date(ev.ts); if (now - d <= 86400000) { const k = String(d.getHours()).padStart(2, '0') + ":00"; if (map[k] !== undefined) map[k]++; } }
     counts = labels.map(l => map[l]);
   } else if (mode === "cw") {
-    titleText = "📊 URBEX ARCHIVES // WIZYTY W TYGODNIU (7 DNI)";
+    titleText = "📊 URBEX ARCHIVES // WIZYTY W TYGODNIU (7 DNI) [JSONL]";
     const map = {};
     for (let i = 6; i >= 0; i--) { const d = new Date(now); d.setDate(d.getDate() - i); const k = d.toLocaleDateString("pl-PL", { month: 'numeric', day: 'numeric' }); labels.push(k); map[k] = 0; }
-    for (const m of messages) { const d = new Date(m.timestamp); if (now - d <= 604800000) { const k = d.toLocaleDateString("pl-PL", { month: 'numeric', day: 'numeric' }); if (map[k] !== undefined) map[k]++; } }
+    for (const ev of events) { const d = new Date(ev.ts); if (now - d <= 604800000) { const k = d.toLocaleDateString("pl-PL", { month: 'numeric', day: 'numeric' }); if (map[k] !== undefined) map[k]++; } }
     counts = labels.map(l => map[l]);
   } else if (mode === "cm") {
-    titleText = "📊 URBEX ARCHIVES // WIZYTY W MIESIĄCU (30 DNI)";
+    titleText = "📊 URBEX ARCHIVES // WIZYTY W MIESIĄCU (30 DNI) [JSONL]";
     const map = {};
     for (let i = 29; i >= 0; i--) { const d = new Date(now); d.setDate(d.getDate() - i); const k = `${d.getDate()}.${d.getMonth() + 1}`; labels.push(k); map[k] = 0; }
-    for (const m of messages) { const d = new Date(m.timestamp); if (now - d <= 2592000000) { const k = `${d.getDate()}.${d.getMonth() + 1}`; if (map[k] !== undefined) map[k]++; } }
+    for (const ev of events) { const d = new Date(ev.ts); if (now - d <= 2592000000) { const k = `${d.getDate()}.${d.getMonth() + 1}`; if (map[k] !== undefined) map[k]++; } }
     counts = labels.map(l => map[l]);
   } else if (mode === "cy") {
-    titleText = "📊 URBEX ARCHIVES // WIZYTY W ROKU (12 MIESIĘCY)";
+    titleText = "📊 URBEX ARCHIVES // WIZYTY W ROKU (12 MIESIĘCY) [JSONL]";
     const mNames = ["Sty", "Lut", "Mar", "Kwi", "Maj", "Cze", "Lip", "Sie", "Wrz", "Paź", "Lis", "Gru"], map = {};
     for (let i = 11; i >= 0; i--) { const k = mNames[(now.getMonth() - i + 12) % 12]; labels.push(k); map[k] = 0; }
-    for (const m of messages) { const k = mNames[new Date(m.timestamp).getMonth()]; if (map[k] !== undefined) map[k]++; }
+    for (const ev of events) { const k = mNames[new Date(ev.ts).getMonth()]; if (map[k] !== undefined) map[k]++; }
     counts = labels.map(l => map[l]);
   } else {
-    titleText = "📊 URBEX ARCHIVES // CAŁKOWITA HISTORIA (ALL-TIME)";
-    if (messages.length === 0) { labels = ["Brak wizyt"]; counts = [0]; }
+    titleText = "📊 URBEX ARCHIVES // CAŁKOWITA HISTORIA (ALL-TIME) [JSONL]";
+    if (events.length === 0) { labels = ["Brak wizyt"]; counts = [0]; }
     else {
-      const dates = messages.map(m => new Date(m.timestamp)).sort((a, b) => a - b);
+      const dates = events.map(ev => new Date(ev.ts)).sort((a, b) => a - b);
       const map = {};
       for (const d of dates) { const k = `${d.getDate()}.${d.getMonth() + 1} ${String(d.getHours()).padStart(2, '0')}:00`; if (!map[k]) { map[k] = 0; labels.push(k); } map[k]++; }
       counts = labels.map(l => map[l]);
@@ -311,8 +369,8 @@ async function sendChartToDiscord(env, triggerReason, mode = "c") {
   const discordEmbed = {
     username: "Urbex Analytics Terminal",
     embeds: [{
-      title: `📈 Raport i Wykres Wizyt [/${mode.toUpperCase()}]`,
-      description: `**Powód wyzwolenia:** ${triggerReason}\n**Tryb:** /${mode}`,
+      title: `📈 Raport i Wykres Wizyt [/${mode.toUpperCase()}] (JSONL)`,
+      description: `**Powód wyzwolenia:** ${triggerReason}\n**Silnik:** JSONL Cloud Stream\n**Tryb:** /${mode}`,
       color: 3066993,
       fields: [
         { name: "📊 Suma wizyt", value: `**${total}** połączeń`, inline: true },
@@ -320,7 +378,7 @@ async function sendChartToDiscord(env, triggerReason, mode = "c") {
         { name: "⚡ Komendy", value: "`/cd` (Dzień) \| `/cw` (Tydzień) \| `/cm` (Miesiąc) \| `/cy` (Rok) \| `/c` (All-time)", inline: false }
       ],
       image: { url: chartUrl },
-      footer: { text: "Cloudflare Serverless Bot // urb3x.github.io" },
+      footer: { text: "Cloudflare JSONL Engine // urb3x.github.io" },
       timestamp: new Date().toISOString()
     }]
   };
