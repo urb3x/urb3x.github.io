@@ -1,16 +1,13 @@
 // ============================================================================
-// CLOUDFLARE WORKER DUAL WEBHOOK SYSTEM:
-// 1. IP_LOGS_WEBHOOK_URL -> Wysyła szczegółowe logi IP na Kanał Logów
-// 2. CHART_WEBHOOK_URL   -> Wysyła wykresy wizyt (1h / /chart / //c) na Kanał Wykresów
+// CLOUDFLARE WORKER DUAL WEBHOOK SYSTEM + DISCORD SLASH COMMANDS HANDLER
+// PUBLIC KEY: 91da9caf8f1d427d42a7e3cf6e68b1c63326e7549db52eb293cc2529cc2ebd3f
+// 1. Logi IP -> STARY WEBHOOK (IP_LOGS_WEBHOOK_URL)
+// 2. Wykresy -> NOWY WEBHOOK (CHART_WEBHOOK_URL) + DISCORD SLASH COMMAND (/chart /c)
 // ============================================================================
 
 const IP_LOGS_WEBHOOK_URL = "https://discord.com/api/webhooks/1532069719056715866/1cAY66JZ6NA6sh-FNeT5sEAKDt_3aZKoQHNBSuHCJEM3Z9dtw9s77EpjwgfNX0JydsgA";
 const CHART_WEBHOOK_URL   = "https://discordapp.com/api/webhooks/1532408149288685709/LjejiSETRtI4IEnixniDvurig20W6K6smJU-k_e5V3mfD9H9Tg_zfuRndeEK42JY01Z-";
-const _bTok = "TVRVek1qUXhNRGszTURnNU16RTRPVEV5TUEuR3RxMkNzLmlKcGRHYkNzTm8xemVnUHl1N3R1NVd5MXhxYWgtbXFnd0lDNjJZ";
-
-function getBotToken(env) {
-  return (env && env.BOT_TOKEN) ? env.BOT_TOKEN : atob(_bTok);
-}
+const DISCORD_PUBLIC_KEY  = "91da9caf8f1d427d42a7e3cf6e68b1c63326e7549db52eb293cc2529cc2ebd3f";
 
 let globalVisitCounts = {};
 
@@ -19,7 +16,7 @@ export default {
     const corsHeaders = {
       "Access-Control-Allow-Origin": "*",
       "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
-      "Access-Control-Allow-Headers": "Content-Type",
+      "Access-Control-Allow-Headers": "Content-Type, X-Signature-Ed25519, X-Signature-Timestamp",
     };
 
     if (request.method === "OPTIONS") {
@@ -29,10 +26,10 @@ export default {
     const url = new URL(request.url);
     const pathname = url.pathname.toLowerCase();
 
-    // Wyzwolenie ręczne wykresu przez URL /chart lub //c lub /c lub GET /chart
+    // 1. Ręczne wyzwolenie z przeglądarki URL: /chart lub //c lub /c
     if (pathname === "/chart" || pathname === "//c" || pathname === "/c" || (request.method === "GET" && pathname !== "/")) {
-      const chartRes = await sendChartToDiscord(env, "Wywołanie ręczne (URL /chart lub //c)");
-      return new Response(JSON.stringify({ success: true, status: "Chart sent to Chart Channel", res: chartRes }), {
+      const chartRes = await sendChartToDiscord(env, "Wywołanie z przeglądarki (URL)");
+      return new Response(JSON.stringify({ success: true, status: "Chart sent to Discord channel", res: chartRes }), {
         status: 200,
         headers: { ...corsHeaders, "Content-Type": "application/json" }
       });
@@ -43,22 +40,57 @@ export default {
     }
 
     try {
-      const payload = await request.json();
+      const bodyText = await request.clone().text();
+      let payload = {};
+      try { payload = JSON.parse(bodyText); } catch(e) {}
 
-      // Wykrycie komendy /chart lub //c przesłanej w ładunku
+      // 2. Obsługa bezpośrednich interakcji / komend Slash od Discorda (PING & Slash Commands)
+      if (payload && payload.type !== undefined) {
+        // PING testowy od Discorda przy weryfikacji pola Interactions Endpoint URL
+        if (payload.type === 1) {
+          return new Response(JSON.stringify({ type: 1 }), {
+            status: 200,
+            headers: { "Content-Type": "application/json" }
+          });
+        }
+
+        // Komenda /chart lub /c wpisana bezpośrednio na czacie Discorda
+        if (payload.type === 2) {
+          ctx.waitUntil(sendChartToDiscord(env, `Komenda Slash od @${payload.member?.user?.username || 'User'}`));
+          const chartConfig = await buildQuickChartConfig(env);
+          const chartUrl = `https://quickchart.io/chart?bkg=%230d1321&width=650&height=360&c=${encodeURIComponent(JSON.stringify(chartConfig))}`;
+
+          return new Response(JSON.stringify({
+            type: 4, // CHANNEL_MESSAGE_WITH_SOURCE
+            data: {
+              content: "📈 **Wykres wizyt został wygenerowany i przesłany na kanał!**",
+              embeds: [{
+                title: "📊 Urbex Archives // Statystyki Wizyt",
+                image: { url: chartUrl },
+                color: 3066993
+              }]
+            }
+          }), {
+            status: 200,
+            headers: { "Content-Type": "application/json" }
+          });
+        }
+      }
+
+      // 3. Obsługa wyzwolenia komendy przesłanej przez zwykły ładunek JSON
       const cmd = (payload && (payload.command || payload.content || "")).toString().trim().toLowerCase();
       if (cmd === "/chart" || cmd === "//c" || cmd === ":chart" || cmd === "chart") {
         await sendChartToDiscord(env, `Komenda ${cmd}`);
-        return new Response(JSON.stringify({ success: true, message: `Chart generated for ${cmd}` }), {
+        return new Response(JSON.stringify({ success: true, message: `Chart sent for ${cmd}` }), {
           status: 200,
           headers: { ...corsHeaders, "Content-Type": "application/json" }
         });
       }
 
-      // 1. Zapisanie rejestrowanej wizyty w statystykach
+      // 4. Zapisanie rejestrowanej wizyty
       await registerVisit(env);
 
-      // 2. Wysyłanie logu IP na STARY KANAŁ LOGÓW (IP_LOGS_WEBHOOK_URL)
+      // 5. Przesłanie szczegółowego logu połączenia (IP, ISP, Przeglądarka) na STARY KANAŁ LOGÓW
       const res = await fetch(IP_LOGS_WEBHOOK_URL, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -110,9 +142,8 @@ async function getVisitData(env) {
   return globalVisitCounts;
 }
 
-async function sendChartToDiscord(env, triggerReason) {
+async function buildQuickChartConfig(env) {
   const visitData = await getVisitData(env);
-
   const labels = [];
   const counts = [];
   const currentHour = new Date().getHours();
@@ -124,9 +155,7 @@ async function sendChartToDiscord(env, triggerReason) {
     counts.push(visitData[hourLabel] || 0);
   }
 
-  const totalVisits = counts.reduce((a, b) => a + b, 0);
-
-  const chartConfig = {
+  return {
     type: 'bar',
     data: {
       labels: labels, // POZIOMO: Czas (Godziny)
@@ -161,8 +190,14 @@ async function sendChartToDiscord(env, triggerReason) {
       }
     }
   };
+}
 
+async function sendChartToDiscord(env, triggerReason) {
+  const chartConfig = await buildQuickChartConfig(env);
   const chartUrl = `https://quickchart.io/chart?bkg=%230d1321&width=650&height=360&c=${encodeURIComponent(JSON.stringify(chartConfig))}`;
+
+  const counts = chartConfig.data.datasets[0].data;
+  const totalVisits = counts.reduce((a, b) => a + b, 0);
 
   const discordEmbed = {
     username: "Urbex Analytics Terminal",
@@ -173,7 +208,7 @@ async function sendChartToDiscord(env, triggerReason) {
       fields: [
         { name: "📊 Suma wizyt (12h)", value: `**${totalVisits}** połączeń`, inline: true },
         { name: "🕒 Czas generowania", value: new Date().toLocaleTimeString("pl-PL"), inline: true },
-        { name: "⚡ Szybki wyzwalacz", value: "Komendy: `/chart` lub `//c`\nLink: `https://flat-dust-8358.3-14-bargiel.workers.dev/chart`", inline: false }
+        { name: "⚡ Szybki wyzwalacz", value: "Komenda: `/chart` lub link: `https://flat-dust-8358.3-14-bargiel.workers.dev/chart`", inline: false }
       ],
       image: { url: chartUrl },
       footer: { text: "Cloudflare Serverless Bot // urb3x.github.io" },
@@ -181,7 +216,6 @@ async function sendChartToDiscord(env, triggerReason) {
     }]
   };
 
-  // Wysyłanie WYKRESU na NOWY KANAŁ WYKRESÓW (CHART_WEBHOOK_URL)
   const response = await fetch(CHART_WEBHOOK_URL, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
