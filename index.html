@@ -113,22 +113,24 @@
             100% { transform: scale(0.95); opacity: 0.8; }
         }
 
-        /* Główne kontenery */
+        /* Główne kontenery z płynnym skalowaniem do każdego urządzenia (Fluid Scaling) */
         .main-content, .error-content {
             display: none;
             background: var(--panel-bg);
             backdrop-filter: blur(24px);
             -webkit-backdrop-filter: blur(24px);
             border: 1px solid rgba(255, 255, 255, 0.14);
-            padding: 45px;
-            border-radius: 20px;
+            padding: clamp(16px, 4vw, 45px);
+            border-radius: clamp(12px, 2vw, 20px);
             box-shadow: 0 30px 80px rgba(0, 0, 0, 0.9), 0 0 40px rgba(46, 204, 113, 0.1);
-            max-width: 1050px;
-            width: 94%;
-            margin: 40px auto;
+            max-width: 1100px;
+            width: min(95vw, 1100px);
+            margin: clamp(15px, 3vw, 40px) auto;
             z-index: 10;
             position: relative;
             animation: fadeIn 0.7s cubic-bezier(0.16, 1, 0.3, 1);
+            padding-left: max(clamp(16px, 4vw, 45px), env(safe-area-inset-left));
+            padding-right: max(clamp(16px, 4vw, 45px), env(safe-area-inset-right));
         }
 
         @keyframes fadeIn {
@@ -138,14 +140,15 @@
 
         .glitch-title {
             font-family: 'Orbitron', sans-serif;
-            font-size: 2.2rem;
+            font-size: clamp(1.3rem, 4vw, 2.3rem);
             font-weight: 900;
             color: #f8fafc;
-            letter-spacing: 2px;
+            letter-spacing: clamp(1px, 0.3vw, 2px);
             margin-top: 5px;
             margin-bottom: 5px;
             text-transform: uppercase;
             text-shadow: 0 0 15px rgba(255,255,255,0.2), 0 0 30px rgba(46, 204, 113, 0.3);
+            word-break: break-word;
         }
 
         .subtitle {
@@ -379,11 +382,11 @@
             margin-top: 4px;
         }
 
-        /* Siatka galerii mediów z efektem porozrzucanych zdjęć (Scattered Masonry Collage) */
+        /* Siatka galerii mediów z efektem porozrzucanych zdjęć (Fluid Responsive Masonry) */
         .media-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-            gap: 22px;
+            grid-template-columns: repeat(auto-fill, minmax(clamp(230px, 30vw, 280px), 1fr));
+            gap: clamp(12px, 2vw, 24px);
             margin-top: 30px;
             align-items: start;
         }
@@ -407,9 +410,9 @@
         .media-card:nth-child(4n+0) { transform: rotate(1.4deg) translateY(-2px); }
 
         /* Wariacje wysokości zdjęć (Scattered Heights) */
-        .media-card:nth-child(3n+1) img, .media-card:nth-child(3n+1) video { height: 260px; }
-        .media-card:nth-child(3n+2) img, .media-card:nth-child(3n+2) video { height: 190px; }
-        .media-card:nth-child(3n+0) img, .media-card:nth-child(3n+0) video { height: 290px; }
+        .media-card:nth-child(3n+1) img, .media-card:nth-child(3n+1) video { height: clamp(200px, 35vh, 260px); }
+        .media-card:nth-child(3n+2) img, .media-card:nth-child(3n+2) video { height: clamp(160px, 28vh, 200px); }
+        .media-card:nth-child(3n+0) img, .media-card:nth-child(3n+0) video { height: clamp(220px, 40vh, 290px); }
 
         /* Wyróżnione kluczowe zdjęcia (Large Feature Spans) */
         .media-card.media-featured {
@@ -417,12 +420,22 @@
             transform: rotate(-0.8deg) !important;
         }
         .media-card.media-featured img {
-            height: 340px !important;
+            height: clamp(250px, 45vh, 340px) !important;
         }
 
-        @media (max-width: 640px) {
+        @media (max-width: 600px) {
+            .media-grid {
+                grid-template-columns: 1fr;
+                gap: 16px;
+            }
+            .media-card {
+                transform: none !important;
+            }
             .media-card.media-featured {
                 grid-column: span 1;
+            }
+            .media-card img, .media-card video {
+                height: 240px !important;
             }
         }
 
