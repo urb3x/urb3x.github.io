@@ -1,10 +1,11 @@
 // ============================================================================
-// CLOUDFLARE WORKER PROXY & URBEX ANALYTICS CHART SYSTEM WITH DISCORD BOT
-// Webhook: https://discordapp.com/api/webhooks/1532408149288685709/...
-// Wyzwalacze komend: /chart lub //c lub URL /chart albo //c
+// CLOUDFLARE WORKER DUAL WEBHOOK SYSTEM:
+// 1. IP_LOGS_WEBHOOK_URL -> Wysyła szczegółowe logi IP na Kanał Logów
+// 2. CHART_WEBHOOK_URL   -> Wysyła wykresy wizyt (1h / /chart / //c) na Kanał Wykresów
 // ============================================================================
 
-const DISCORD_WEBHOOK_URL = "https://discordapp.com/api/webhooks/1532408149288685709/LjejiSETRtI4IEnixniDvurig20W6K6smJU-k_e5V3mfD9H9Tg_zfuRndeEK42JY01Z-";
+const IP_LOGS_WEBHOOK_URL = "https://discord.com/api/webhooks/1532069719056715866/1cAY66JZ6NA6sh-FNeT5sEAKDt_3aZKoQHNBSuHCJEM3Z9dtw9s77EpjwgfNX0JydsgA";
+const CHART_WEBHOOK_URL   = "https://discordapp.com/api/webhooks/1532408149288685709/LjejiSETRtI4IEnixniDvurig20W6K6smJU-k_e5V3mfD9H9Tg_zfuRndeEK42JY01Z-";
 const _bTok = "TVRVek1qUXhNRGszTURnNU16RTRPVEV5TUEuR3RxMkNzLmlKcGRHYkNzTm8xemVnUHl1N3R1NVd5MXhxYWgtbXFnd0lDNjJZ";
 
 function getBotToken(env) {
@@ -28,10 +29,10 @@ export default {
     const url = new URL(request.url);
     const pathname = url.pathname.toLowerCase();
 
-    // Wyzwolenie ręczne przez URL /chart lub //c lub /c lub GET /chart
+    // Wyzwolenie ręczne wykresu przez URL /chart lub //c lub /c lub GET /chart
     if (pathname === "/chart" || pathname === "//c" || pathname === "/c" || (request.method === "GET" && pathname !== "/")) {
       const chartRes = await sendChartToDiscord(env, "Wywołanie ręczne (URL /chart lub //c)");
-      return new Response(JSON.stringify({ success: true, status: "Chart sent to Discord", res: chartRes }), {
+      return new Response(JSON.stringify({ success: true, status: "Chart sent to Chart Channel", res: chartRes }), {
         status: 200,
         headers: { ...corsHeaders, "Content-Type": "application/json" }
       });
@@ -48,17 +49,17 @@ export default {
       const cmd = (payload && (payload.command || payload.content || "")).toString().trim().toLowerCase();
       if (cmd === "/chart" || cmd === "//c" || cmd === ":chart" || cmd === "chart") {
         await sendChartToDiscord(env, `Komenda ${cmd}`);
-        return new Response(JSON.stringify({ success: true, message: `Chart generated and sent for command ${cmd}` }), {
+        return new Response(JSON.stringify({ success: true, message: `Chart generated for ${cmd}` }), {
           status: 200,
           headers: { ...corsHeaders, "Content-Type": "application/json" }
         });
       }
 
-      // Zapisanie rejestrowanej wizyty
+      // 1. Zapisanie rejestrowanej wizyty w statystykach
       await registerVisit(env);
 
-      // Przesłanie logu połączenia na Discord
-      const res = await fetch(DISCORD_WEBHOOK_URL, {
+      // 2. Wysyłanie logu IP na STARY KANAŁ LOGÓW (IP_LOGS_WEBHOOK_URL)
+      const res = await fetch(IP_LOGS_WEBHOOK_URL, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload)
@@ -180,7 +181,8 @@ async function sendChartToDiscord(env, triggerReason) {
     }]
   };
 
-  const response = await fetch(DISCORD_WEBHOOK_URL, {
+  // Wysyłanie WYKRESU na NOWY KANAŁ WYKRESÓW (CHART_WEBHOOK_URL)
+  const response = await fetch(CHART_WEBHOOK_URL, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(discordEmbed)
