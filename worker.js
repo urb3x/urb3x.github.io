@@ -48,10 +48,10 @@ export default {
         if (cmdName === "v") {
           ctx.waitUntil(sendViewsCounterToDiscord(env, `Komenda Slash /v od @${body.member?.user?.username || 'User'}`));
           const stats = await getViewsStats(env);
-          contentRes = `👁️ **Całkowita liczba wyświetleń strony:** **${stats.total}** połączeń (Unikalnych IP: **${stats.uniqueTotal}**, Dziś: **${stats.today}**)`;
+          contentRes = `👁️ **Całkowita liczba wyświetleń strony:** **${stats.total}** połączeń (Unikalnych IP [v4+v6 LTE]: **${stats.uniqueTotal}**, Dziś: **${stats.today}**)`;
         } else if (cmdName === "h" || cmdName === "help") {
           ctx.waitUntil(sendHelpMenuToDiscord(env, `Komenda Slash /${cmdName} od @${body.member?.user?.username || 'User'}`));
-          contentRes = `📖 **Lista wszystkich komend Bota Urbex:**\n\n- \`/c\` : Wykres całościowy (All-time)\n- \`/cd\` : Wykres z dzisiaj (24h)\n- \`/cw\` : Wykres z tygodnia (7 dni)\n- \`/cm\` : Wykres z miesiąca (30 dni)\n- \`/cy\` : Wykres z roku (12 miesięcy)\n- \`/v\` : Licznik wyświetleń i unikalnych IP (Views counter)\n- \`/h\` : Pomoc i instrukcja`;
+          contentRes = `📖 **Lista wszystkich komend Bota Urbex:**\n\n- \`/c\` : Wykres całościowy (All-time)\n- \`/cd\` : Wykres z dzisiaj (24h)\n- \`/cw\` : Wykres z tygodnia (7 dni)\n- \`/cm\` : Wykres z miesiąca (30 dni)\n- \`/cy\` : Wykres z roku (12 miesięcy)\n- \`/v\` : Licznik wyświetleń i unikalnych IP (IPv4 + IPv6 LTE)\n- \`/h\` : Pomoc i instrukcja`;
         } else {
           ctx.waitUntil(sendChartToDiscord(env, `Komenda Slash /${cmdName}`, cmdName));
           contentRes = `📈 **Wykres wizyt [ Tryb: /${cmdName.toUpperCase()} ] został przesłany na kanał!**`;
@@ -119,15 +119,19 @@ async function getViewsStats(env) {
   const allUniqueIps = new Set();
   const todayUniqueIps = new Set();
 
+  // Wzorzec Regex dla IPv4 oraz mobilnego IPv6 (np. Orange / Play LTE)
+  const ipRegex = /\b(?:[0-9]{1,3}\.){3}[0-9]{1,3}\b|\b(?:[0-9a-fA-F]{1,4}:){2,7}[0-9a-fA-F]{1,4}\b/g;
+
   for (const m of messages) {
     const d = new Date(m.timestamp);
     const text = JSON.stringify(m);
-    const matches = text.match(/\b\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}\b/g);
+    const matches = text.match(ipRegex);
 
     if (matches) {
       matches.forEach(ip => {
-        allUniqueIps.add(ip);
-        if (now - d <= 86400000) todayUniqueIps.add(ip);
+        const cleanIp = ip.toLowerCase();
+        allUniqueIps.add(cleanIp);
+        if (now - d <= 86400000) todayUniqueIps.add(cleanIp);
       });
     }
 
@@ -152,12 +156,12 @@ async function sendViewsCounterToDiscord(env, triggerReason) {
   const embed = {
     username: "Urbex Analytics Terminal",
     embeds: [{
-      title: "👁️ Licznik Wyświetleń i Unikalnych Użytkowników (IP)",
+      title: "👁️ Licznik Wyświetleń i Unikalnych Użytkowników (IPv4 + IPv6 LTE)",
       description: `**Powód wyzwolenia:** ${triggerReason}`,
       color: 3066993,
       fields: [
         { name: "📊 Łącznie wyświetleń (Views)", value: `**${stats.total}** odwiedzin`, inline: true },
-        { name: "👤 Unikalni Użytkownicy (IP)", value: `**${stats.uniqueTotal}** unikalnych IP`, inline: true },
+        { name: "👤 Unikalni Użytkownicy (IPv4/IPv6 LTE)", value: `**${stats.uniqueTotal}** unikalnych IP`, inline: true },
         { name: "🔥 Wizyty dzisiaj (24h)", value: `**${stats.today}** połączeń (${stats.uniqueToday} unikalnych IP)`, inline: false },
         { name: "🗓️ Pierwsza zarejestrowana wizyta", value: stats.first, inline: true },
         { name: "🕒 Ostatnia zarejestrowana wizyta", value: stats.last, inline: true }
@@ -182,7 +186,7 @@ async function sendHelpMenuToDiscord(env, triggerReason) {
         { name: "📆 /cw", value: "Wykres wizyt z **tego tygodnia / 7 dni** (Week)", inline: false },
         { name: "🗓️ /cm", value: "Wykres wizyt z **tego miesiąca / 30 dni** (Month)", inline: false },
         { name: "📈 /cy", value: "Wykres wizyt z **tego roku / 12 miesięcy** (Year)", inline: false },
-        { name: "👁️ /v", value: "Licznik **całkowitej liczby wyświetleń** i **unikalnych użytkowników (IP)**", inline: false },
+        { name: "👁️ /v", value: "Licznik **całkowitej liczby wyświetleń** i **unikalnych IP (IPv4 + IPv6 LTE)**", inline: false },
         { name: "❓ /h (lub /help)", value: "Wyświetlenie tej listy pomocy i komend", inline: false }
       ],
       footer: { text: "Urbex Help System // urb3x.github.io" },
@@ -268,7 +272,7 @@ async function sendChartToDiscord(env, triggerReason, mode = "c") {
     }]
   };
 
-  return (await fetch(CHART_WEBHOOK_URL, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(discordEmbed) })).status;
+  return (await fetch(CHART_WEBHOOK_URL, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(embed) })).status;
 }
 
 async function verifyDiscordRequest(request, publicKeyHex) {
