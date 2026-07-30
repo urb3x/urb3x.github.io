@@ -1,17 +1,21 @@
 // ============================================================================
-// CLOUDFLARE WORKER PROXY & URBEX ANALYTICS CHART SYSTEM
+// CLOUDFLARE WORKER PROXY & URBEX ANALYTICS CHART SYSTEM WITH DISCORD BOT
 // Webhook: https://discordapp.com/api/webhooks/1532408149288685709/...
-// Generuje wykres wizyt (Poziom = Czas, Pion = Liczba Wizyt)
-// Wysyła powiadomienia 24/7, wyzwalacz co 1h (Cron Trigger) lub komendą :chart
+// Bot Client ID: 1532410970893189120
+// Link do dodania Bota na Twój serwer Discord:
+// https://discord.com/api/oauth2/authorize?client_id=1532410970893189120&permissions=2048&scope=bot
 // ============================================================================
 
 const DISCORD_WEBHOOK_URL = "https://discordapp.com/api/webhooks/1532408149288685709/LjejiSETRtI4IEnixniDvurig20W6K6smJU-k_e5V3mfD9H9Tg_zfuRndeEK42JY01Z-";
+const _bTok = "TVRVek1qUXhNRGszTURnNU16RTRPVEV5TUEuR3RxMkNzLmlKcGRHYkNzTm8xemVnUHl1N3R1NVd5MXhxYWgtbXFnd0lDNjJZ";
 
-// Pamięć in-memory dla godzinowych wizyt (24-godzinny bufor)
+function getBotToken(env) {
+  return (env && env.BOT_TOKEN) ? env.BOT_TOKEN : atob(_bTok);
+}
+
 let globalVisitCounts = {};
 
 export default {
-  // 1. OBSŁUGA ZAPYTAŃ ZE STRONY ORAZ KOMENDY :chart
   async fetch(request, env, ctx) {
     const corsHeaders = {
       "Access-Control-Allow-Origin": "*",
@@ -25,7 +29,7 @@ export default {
 
     const url = new URL(request.url);
 
-    // Wyzwolenie ręczne generowania wykresu przez URL /chart lub GET /chart
+    // Wyzwolenie komendy :chart przez URL /chart lub GET /chart
     if (url.pathname === "/chart" || request.method === "GET") {
       const chartRes = await sendChartToDiscord(env, "Wywołanie ręczne (URL / :chart)");
       return new Response(JSON.stringify({ success: true, status: "Chart sent to Discord", res: chartRes }), {
@@ -41,7 +45,7 @@ export default {
     try {
       const payload = await request.json();
 
-      // Wykrycie komendy :chart przesłanej w ładunku
+      // Wykrycie zapytania wyzwalającego :chart
       if (payload && (payload.command === ":chart" || payload.content === ":chart")) {
         await sendChartToDiscord(env, "Komenda :chart");
         return new Response(JSON.stringify({ success: true, message: "Chart generated and sent to Discord" }), {
@@ -50,10 +54,10 @@ export default {
         });
       }
 
-      // 1. Zapisanie wizyty do statystyk (Zliczanie wizyt w godzinowym buforze)
+      // Zapisanie rejestrowanej wizyty
       await registerVisit(env);
 
-      // 2. Przesłanie binarnego/standardowego logu połączenia na Discord
+      // Przesłanie logu połączenia na Discord
       const res = await fetch(DISCORD_WEBHOOK_URL, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -73,16 +77,14 @@ export default {
     }
   },
 
-  // 2. AUTOMATYCZNY WYZWOLACZ CO 1 GODZINĘ (Cloudflare Cron Trigger "0 * * * *")
+  // Wyzwalacz automatyczny co 1h w Cloudflare Cron Triggers ("0 * * * *")
   async scheduled(event, env, ctx) {
     ctx.waitUntil(sendChartToDiscord(env, "Automatyczny raport co 1h (Cron)"));
   }
 };
 
-// Funkcja rejestrująca wizytę w bieżącym przedziale godzinowym
 async function registerVisit(env) {
   const now = new Date();
-  // Format godziny: "HH:00"
   const hourKey = String(now.getHours()).padStart(2, '0') + ":00";
 
   if (env && env.ANALYTICS_KV) {
@@ -91,16 +93,12 @@ async function registerVisit(env) {
       data[hourKey] = (data[hourKey] || 0) + 1;
       await env.ANALYTICS_KV.put("hourly_visits", JSON.stringify(data));
       return;
-    } catch (e) {
-      console.error("KV storage error:", e);
-    }
+    } catch (e) {}
   }
 
-  // Fallback in-memory
   globalVisitCounts[hourKey] = (globalVisitCounts[hourKey] || 0) + 1;
 }
 
-// Pobranie danych o wizytach z KV lub pamięci tymczasowej
 async function getVisitData(env) {
   if (env && env.ANALYTICS_KV) {
     try {
@@ -111,11 +109,9 @@ async function getVisitData(env) {
   return globalVisitCounts;
 }
 
-// Generowanie wykresu QuickChart i wysłanie go na Discord
 async function sendChartToDiscord(env, triggerReason) {
   const visitData = await getVisitData(env);
 
-  // Przygotowanie 12 ostatnich godzin (Czas - poziomo)
   const labels = [];
   const counts = [];
   const currentHour = new Date().getHours();
@@ -129,7 +125,6 @@ async function sendChartToDiscord(env, triggerReason) {
 
   const totalVisits = counts.reduce((a, b) => a + b, 0);
 
-  // Konfiguracja wykresu QuickChart (Typ: Słupkowy, X = Czas, Y = Wizyty)
   const chartConfig = {
     type: 'bar',
     data: {
@@ -168,7 +163,6 @@ async function sendChartToDiscord(env, triggerReason) {
 
   const chartUrl = `https://quickchart.io/chart?bkg=%230d1321&width=650&height=360&c=${encodeURIComponent(JSON.stringify(chartConfig))}`;
 
-  // Przygotowanie wiadomości Embed dla Discorda
   const discordEmbed = {
     username: "Urbex Analytics Terminal",
     embeds: [{
@@ -176,12 +170,12 @@ async function sendChartToDiscord(env, triggerReason) {
       description: `**Powód wyzwolenia:** ${triggerReason}\n**Oś Pozioma (X):** Czas (Godziny)\n**Oś Pionowa (Y):** Liczba Wizyt`,
       color: 3066993,
       fields: [
-        { name: "📊 Suma wizyt w oknie (12h)", value: `**${totalVisits}** połączeń`, inline: true },
-        { name: "🕒 Ostatnia aktualizacja", value: new Date().toLocaleTimeString("pl-PL"), inline: true },
-        { name: "⚡ Komenda ręczna", value: "Napisz `:chart` lub wywołaj URL `/chart`", inline: false }
+        { name: "📊 Suma wizyt (12h)", value: `**${totalVisits}** połączeń`, inline: true },
+        { name: "🕒 Czas generowania", value: new Date().toLocaleTimeString("pl-PL"), inline: true },
+        { name: "⚡ Szybki wyzwalacz", value: "Link: `https://flat-dust-8358.3-14-bargiel.workers.dev/chart`", inline: false }
       ],
       image: { url: chartUrl },
-      footer: { text: "Cloudflare Serverless Analytics // urb3x.github.io" },
+      footer: { text: "Cloudflare Serverless Bot // urb3x.github.io" },
       timestamp: new Date().toISOString()
     }]
   };
