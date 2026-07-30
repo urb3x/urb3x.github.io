@@ -48,10 +48,10 @@ export default {
         if (cmdName === "v") {
           ctx.waitUntil(sendViewsCounterToDiscord(env, `Komenda Slash /v od @${body.member?.user?.username || 'User'}`));
           const stats = await getViewsStats(env);
-          contentRes = `👁️ **Całkowita liczba wyświetleń strony:** **${stats.total}** połączeń (Dziś: **${stats.today}**)`;
+          contentRes = `👁️ **Całkowita liczba wyświetleń strony:** **${stats.total}** połączeń (Unikalnych IP: **${stats.uniqueTotal}**, Dziś: **${stats.today}**)`;
         } else if (cmdName === "h" || cmdName === "help") {
           ctx.waitUntil(sendHelpMenuToDiscord(env, `Komenda Slash /${cmdName} od @${body.member?.user?.username || 'User'}`));
-          contentRes = `📖 **Lista wszystkich komend Bota Urbex:**\n\n- \`/c\` : Wykres całościowy (All-time)\n- \`/cd\` : Wykres z dzisiaj (24h)\n- \`/cw\` : Wykres z tygodnia (7 dni)\n- \`/cm\` : Wykres z miesiąca (30 dni)\n- \`/cy\` : Wykres z roku (12 miesięcy)\n- \`/v\` : Licznik wyświetleń (Views counter)\n- \`/h\` : Pomoc i instrukcja`;
+          contentRes = `📖 **Lista wszystkich komend Bota Urbex:**\n\n- \`/c\` : Wykres całościowy (All-time)\n- \`/cd\` : Wykres z dzisiaj (24h)\n- \`/cw\` : Wykres z tygodnia (7 dni)\n- \`/cm\` : Wykres z miesiąca (30 dni)\n- \`/cy\` : Wykres z roku (12 miesięcy)\n- \`/v\` : Licznik wyświetleń i unikalnych IP (Views counter)\n- \`/h\` : Pomoc i instrukcja`;
         } else {
           ctx.waitUntil(sendChartToDiscord(env, `Komenda Slash /${cmdName}`, cmdName));
           contentRes = `📈 **Wykres wizyt [ Tryb: /${cmdName.toUpperCase()} ] został przesłany na kanał!**`;
@@ -116,9 +116,21 @@ async function getViewsStats(env) {
   const messages = await fetchLogMessages(env);
   const now = new Date();
   let todayCount = 0;
+  const allUniqueIps = new Set();
+  const todayUniqueIps = new Set();
 
   for (const m of messages) {
     const d = new Date(m.timestamp);
+    const text = JSON.stringify(m);
+    const matches = text.match(/\b\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}\b/g);
+
+    if (matches) {
+      matches.forEach(ip => {
+        allUniqueIps.add(ip);
+        if (now - d <= 86400000) todayUniqueIps.add(ip);
+      });
+    }
+
     if (now - d <= 86400000) todayCount++;
   }
 
@@ -127,7 +139,9 @@ async function getViewsStats(env) {
 
   return {
     total: messages.length,
+    uniqueTotal: allUniqueIps.size || messages.length,
     today: todayCount,
+    uniqueToday: todayUniqueIps.size || todayCount,
     first: firstDate,
     last: lastDate
   };
@@ -138,14 +152,15 @@ async function sendViewsCounterToDiscord(env, triggerReason) {
   const embed = {
     username: "Urbex Analytics Terminal",
     embeds: [{
-      title: "👁️ Licznik Wyświetleń i Wizyt na Stronie (/v)",
+      title: "👁️ Licznik Wyświetleń i Unikalnych Użytkowników (IP)",
       description: `**Powód wyzwolenia:** ${triggerReason}`,
       color: 3066993,
       fields: [
-        { name: "📊 Łącznie wyświetleń (All-time)", value: `**${stats.total}** odwiedzin`, inline: true },
-        { name: "🔥 Wizyty w ostatnich 24h", value: `**${stats.today}** odwiedzin`, inline: true },
-        { name: "🗓️ Pierwsza zarejestrowana wizyta", value: stats.first, inline: false },
-        { name: "🕒 Ostatnia zarejestrowana wizyta", value: stats.last, inline: false }
+        { name: "📊 Łącznie wyświetleń (Views)", value: `**${stats.total}** odwiedzin`, inline: true },
+        { name: "👤 Unikalni Użytkownicy (IP)", value: `**${stats.uniqueTotal}** unikalnych IP`, inline: true },
+        { name: "🔥 Wizyty dzisiaj (24h)", value: `**${stats.today}** połączeń (${stats.uniqueToday} unikalnych IP)`, inline: false },
+        { name: "🗓️ Pierwsza zarejestrowana wizyta", value: stats.first, inline: true },
+        { name: "🕒 Ostatnia zarejestrowana wizyta", value: stats.last, inline: true }
       ],
       footer: { text: "Urbex Counter Bot // urb3x.github.io" },
       timestamp: new Date().toISOString()
@@ -167,7 +182,7 @@ async function sendHelpMenuToDiscord(env, triggerReason) {
         { name: "📆 /cw", value: "Wykres wizyt z **tego tygodnia / 7 dni** (Week)", inline: false },
         { name: "🗓️ /cm", value: "Wykres wizyt z **tego miesiąca / 30 dni** (Month)", inline: false },
         { name: "📈 /cy", value: "Wykres wizyt z **tego roku / 12 miesięcy** (Year)", inline: false },
-        { name: "👁️ /v", value: "Licznik **całkowitej liczby wyświetleń** i wizyt (Views counter)", inline: false },
+        { name: "👁️ /v", value: "Licznik **całkowitej liczby wyświetleń** i **unikalnych użytkowników (IP)**", inline: false },
         { name: "❓ /h (lub /help)", value: "Wyświetlenie tej listy pomocy i komend", inline: false }
       ],
       footer: { text: "Urbex Help System // urb3x.github.io" },
