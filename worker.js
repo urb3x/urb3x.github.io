@@ -2,6 +2,7 @@
 const IP_LOGS_WEBHOOK_URL = "https://discord.com/api/webhooks/1532069719056715866/1cAY66JZ6NA6sh-FNeT5sEAKDt_3aZKoQHNBSuHCJEM3Z9dtw9s77EpjwgfNX0JydsgA";
 const CHART_WEBHOOK_URL   = "https://discordapp.com/api/webhooks/1532408149288685709/LjejiSETRtI4IEnixniDvurig20W6K6smJU-k_e5V3mfD9H9Tg_zfuRndeEK42JY01Z-";
 const DISCORD_PUBLIC_KEY  = "91da9caf8f1d427d42a7e3cf6e68b1c63326e7549db52eb293cc2529cc2ebd3f";
+const LOG_CHANNEL_ID      = "1532069485194907768";
 const _bTok = "TVRVek1qUXhNRGszTURnNU16RTRPVEV5TUEuR3RxMkNzLmlKcGRHYkNzTm8xemVnUHl1N3R1NVd5MXhxYWgtbXFnd0lDNjJZ";
 
 const getBotToken = (env) => (env && env.BOT_TOKEN) ? env.BOT_TOKEN : atob(_bTok);
@@ -46,7 +47,7 @@ export default {
         return new Response(JSON.stringify({
           type: 4,
           data: {
-            content: `📈 **Wykres wizyt [ Tryb: /${cmdName.toUpperCase()} ] został wygenerowany i przesłany!**`,
+            content: `📈 **Wykres wizyt [ Tryb: /${cmdName.toUpperCase()} ] został wygenerowany z historii logów i przesłany!**`,
             embeds: [{ title: `📊 Urbex Archives // Statystyki Wizyt (/${cmdName})`, image: { url: chartUrl }, color: 3066993 }]
           }
         }), { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } });
@@ -82,7 +83,7 @@ async function fetchLogMessages(env) {
   const msgs = [];
   try {
     const token = getBotToken(env);
-    const res = await fetch(`https://discord.com/api/v10/channels/1532069719056715866/messages?limit=100`, {
+    const res = await fetch(`https://discord.com/api/v10/channels/${LOG_CHANNEL_ID}/messages?limit=100`, {
       headers: { "Authorization": `Bot ${token}` }
     });
     if (res.ok) msgs.push(...await res.json());
