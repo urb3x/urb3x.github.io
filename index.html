@@ -65,6 +65,41 @@
             transform: translateY(-2px);
             box-shadow: 0 12px 30px rgba(0,0,0,0.9), 0 0 22px var(--neon-green-glow);
         }
+
+        /* Glowing Instagram Floating Pill (Top Left) */
+        .ig-floating-pill {
+            position: fixed;
+            top: 18px;
+            left: 20px;
+            z-index: 9999;
+            background: rgba(13, 19, 33, 0.92);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid #e1306c;
+            border-radius: 30px;
+            padding: 5px 14px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.8), 0 0 15px rgba(225, 48, 108, 0.4);
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 13px;
+            color: #fff;
+            text-decoration: none;
+            transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+        }
+        .ig-floating-pill:hover {
+            transform: translateY(-2px) scale(1.04);
+            border-color: #fd1d1d;
+            box-shadow: 0 12px 30px rgba(0,0,0,0.9), 0 0 25px rgba(253, 29, 29, 0.6);
+            color: #fff;
+        }
+        .ig-gradient-text {
+            background: linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            font-weight: 800;
+        }
         .lang-btn {
             background: transparent;
             border: none;
@@ -707,6 +742,12 @@
 </head>
 <body>
 
+    <!-- PRZYCISK INSTAGRAM (FLOATING IG BADGE) -->
+    <a href="https://www.instagram.com/piotr72181/?hl=pl#" target="_blank" rel="noopener" class="ig-floating-pill" title="Obserwuj profil na Instagramie">
+        <span style="font-size: 15px;">📸</span>
+        <span class="ig-gradient-text">ig: @piotr72181</span>
+    </a>
+
     <!-- PRZEŁĄCZNIK JĘZYKA (LANGUAGE SWITCHER SWITCH PL / EN) -->
     <div id="langSwitcher" class="lang-switcher-pill">
         <button id="langBtnPL" class="lang-btn active" onclick="setLanguage('pl')">🇵🇱 PL</button>
@@ -811,6 +852,14 @@
             <div id="hudGPS" class="coord-pill" onclick="copyCoordinates('52.2100195, 20.8890224')" title="Kliknij, aby skopiować współrzędne GPS" style="font-family: 'Share Tech Mono', monospace; font-size: 13px; color: #94a3b8;">
                 📍 GPS: <strong>52.2100° N, 20.8890° E</strong> <span style="font-size: 11px; opacity: 0.7;">[KOPIUJ]</span>
             </div>
+        </div>
+
+        <!-- LIVE TERMINAL HUD MATRIX BAR -->
+        <div style="display: flex; flex-wrap: wrap; gap: 10px; align-items: center; justify-content: space-between; background: rgba(5,8,15,0.75); border: 1px solid rgba(46,204,113,0.3); padding: 10px 16px; border-radius: 8px; margin-bottom: 20px; font-family: 'Share Tech Mono', monospace; font-size: 12px; color: #94a3b8; box-shadow: inset 0 0 15px rgba(46,204,113,0.08);">
+            <div>⚡ SYSTEM: <span style="color: #2ecc71; font-weight: bold;">ONLINE</span></div>
+            <div>🔐 WATERMARK: <span style="color: #38bdf8; font-weight: bold;">ig:piotr72181</span></div>
+            <div>📡 TELEMETRY: <span style="color: #f39c12; font-weight: bold;">ENCRYPTED</span></div>
+            <div>📂 MEDIA ARCHIVE: <span style="color: #2ecc71; font-weight: bold;">41 FILES</span></div>
         </div>
 
         <h1 id="mainTitle" class="glitch-title">Opuszczony Zakład Przemysłowy</h1>
