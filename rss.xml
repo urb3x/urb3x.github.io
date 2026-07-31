@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+<channel>
+  <title>URBEX ARCHIVES // Opuszczony Zakład Przemysłowy</title>
+  <link>https://urb3x.github.io/</link>
+  <description>Dokumentacja eksploracyjna opuszczonego zakładu przemysłowego w Warszawie (Odolany/Ursus). Galeria 28 fotografii HD oraz 13 nagrań wideo.</description>
+  <language>pl-PL</language>
+  <lastBuildDate>Fri, 31 Jul 2026 22:24:00 +0200</lastBuildDate>
+  <atom:link href="https://urb3x.github.io/rss.xml" rel="self" type="application/rss+xml" />
+
+  <item>
+    <title>📷 Archiwum Fotograficzne i Wideo // Abandoned Industrial Facility</title>
+    <link>https://urb3x.github.io/</link>
+    <description>28 autorskich fotografii w pełnej rozdzielczości oraz 13 nagrań wideo z eksploracji opuszczonej hali przemysłowej na Odolanach.</description>
+    <guid isPermaLink="true">https://urb3x.github.io/#gallery</guid>
+    <pubDate>Fri, 31 Jul 2026 22:24:00 +0200</pubDate>
+  </item>
+
+  <item>
+    <title>⚠️ Raport Ochrony &amp; Wojska // Urbex Warszawa</title>
+    <link>https://urb3x.github.io/</link>
+    <description>Ostrzeżenia nawigacyjne, opis reagującej ochrony, psów służbowych oraz ćwiczeń wojskowych na terenie obiektu.</description>
+    <guid isPermaLink="true">https://urb3x.github.io/#hazards</guid>
+    <pubDate>Fri, 31 Jul 2026 22:24:00 +0200</pubDate>
+  </item>
+</channel>
+</rss>

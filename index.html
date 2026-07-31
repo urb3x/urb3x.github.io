@@ -3,8 +3,25 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>URBEX ARCHIVES // Opuszczony Zakład Przemysłowy</title>
+    <title id="docTitle">URBEX ARCHIVES // Opuszczony Zakład Przemysłowy</title>
     
+    <!-- OpenGraph / Facebook / Discord / Messenger / WhatsApp Meta Tags -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://urb3x.github.io/">
+    <meta property="og:title" content="URBEX ARCHIVES // Opuszczony Zakład Przemysłowy">
+    <meta property="og:description" content="Dokumentacja eksploracyjna opuszczonego zakładu przemysłowego w Warszawie (Odolany/Ursus). Galeria 28 fotografii HD oraz 13 nagrań wideo.">
+    <meta property="og:image" content="https://urb3x.github.io/assets/budynek.jpg">
+
+    <!-- Twitter Card Meta Tags -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:url" content="https://urb3x.github.io/">
+    <meta name="twitter:title" content="URBEX ARCHIVES // Opuszczony Zakład Przemysłowy">
+    <meta name="twitter:description" content="Dokumentacja eksploracyjna opuszczonego zakładu przemysłowego w Warszawie (Odolany/Ursus). Galeria 28 fotografii HD oraz 13 nagrań wideo.">
+    <meta name="twitter:image" content="https://urb3x.github.io/assets/budynek.jpg">
+
+    <!-- RSS Feed Autodiscovery -->
+    <link rel="alternate" type="application/rss+xml" title="URBEX ARCHIVES RSS Feed" href="rss.xml">
+
     <!-- Google Fonts dla militarnego/urbexowego klimatu -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -22,6 +39,52 @@
             --dark-bg: #07090e;
             --panel-bg: rgba(13, 19, 33, 0.93);
             --card-bg: rgba(18, 26, 43, 0.7);
+        }
+
+        /* Glassmorphism Floating Language Switcher */
+        .lang-switcher-pill {
+            position: fixed;
+            top: 18px;
+            right: 20px;
+            z-index: 9999;
+            background: rgba(13, 19, 33, 0.92);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid var(--neon-green);
+            border-radius: 30px;
+            padding: 4px 10px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.8), 0 0 15px var(--neon-green-glow);
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 13px;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        .lang-switcher-pill:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 30px rgba(0,0,0,0.9), 0 0 22px var(--neon-green-glow);
+        }
+        .lang-btn {
+            background: transparent;
+            border: none;
+            color: #94a3b8;
+            cursor: pointer;
+            font-family: inherit;
+            font-size: 12px;
+            font-weight: 700;
+            padding: 4px 10px;
+            border-radius: 20px;
+            transition: all 0.2s ease;
+        }
+        .lang-btn.active {
+            background: var(--neon-green);
+            color: #07090e;
+            box-shadow: 0 0 10px var(--neon-green);
+        }
+        .lang-divider {
+            color: rgba(255,255,255,0.25);
+            font-size: 12px;
         }
 
         * {
@@ -644,74 +707,81 @@
 </head>
 <body>
 
+    <!-- PRZEŁĄCZNIK JĘZYKA (LANGUAGE SWITCHER SWITCH PL / EN) -->
+    <div id="langSwitcher" class="lang-switcher-pill">
+        <button id="langBtnPL" class="lang-btn active" onclick="setLanguage('pl')">🇵🇱 PL</button>
+        <span class="lang-divider">|</span>
+        <button id="langBtnEN" class="lang-btn" onclick="setLanguage('en')">🇬🇧 EN</button>
+    </div>
+
     <!-- Warstwa tła -->
     <div id="bgLayer" class="background-blur"></div>
 
     <!-- 1. OKNO POPUP ZGODY (APPEALING & ENCOURAGING VERIFICATION MODAL) -->
     <div id="privacyOverlay" class="overlay">
         <div class="modal" style="max-width: 620px;">
-            <div class="badge badge-green" style="padding: 6px 14px; font-size: 12px; margin-bottom: 10px;">
+            <div id="modalBadge" class="badge badge-green" style="padding: 6px 14px; font-size: 12px; margin-bottom: 10px;">
                 <span class="pulse-dot"></span> 🔓 ARTYKUŁ gotowy do odblokowania
             </div>
             
-            <h2 style="font-family: 'Orbitron', sans-serif; font-size: 1.7rem; color: #fff; margin-bottom: 8px;">
+            <h2 id="modalTitle" style="font-family: 'Orbitron', sans-serif; font-size: 1.7rem; color: #fff; margin-bottom: 8px;">
                 Witaj w Archiwum Urbex
             </h2>
-            <div style="font-family: 'Share Tech Mono', monospace; color: var(--neon-green); font-size: 0.95rem; margin-bottom: 20px;">
+            <div id="modalSub" style="font-family: 'Share Tech Mono', monospace; color: var(--neon-green); font-size: 0.95rem; margin-bottom: 20px;">
                 // WERYFIKACJA DOSTĘPU DO RAPORTU & GALERII MEDIÓW
             </div>
 
-            <p style="color: #cbd5e1; font-size: 1.05rem; line-height: 1.6; margin-bottom: 20px;">
+            <p id="modalDesc" style="color: #cbd5e1; font-size: 1.05rem; line-height: 1.6; margin-bottom: 20px;">
                 Zaakceptuj regulamin użytkowania serwisu, aby uzyskać natychmiastowy dostęp do pełnej dokumentacji eksploracyjnej obiektu <strong>Opuszczony Zakład Przemysłowy</strong>.
             </p>
 
             <!-- Lista odblokowywanych materiałów -->
             <div style="background: rgba(0,0,0,0.5); border: 1px solid rgba(46, 204, 113, 0.25); border-radius: 12px; padding: 16px 20px; text-align: left; margin-bottom: 20px; font-family: 'Share Tech Mono', monospace; font-size: 0.9rem; color: #e2e8f0;">
-                <div style="color: var(--neon-green); font-weight: 700; margin-bottom: 8px; text-transform: uppercase; font-size: 0.85rem; letter-spacing: 1px;">
+                <div id="modalHeaderUnlock" style="color: var(--neon-green); font-weight: 700; margin-bottom: 8px; text-transform: uppercase; font-size: 0.85rem; letter-spacing: 1px;">
                     ⚡ Po akceptacji natychmiast odblokujesz:
                 </div>
                 <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 8px;">
-                    <div>✅ <strong>20 Zdjęć HD</strong> (Hale, dachy, schrony)</div>
-                    <div>✅ <strong>2 Nagrania Wideo</strong> z eksploracji</div>
-                    <div>✅ <strong>Współrzędne GPS</strong> & Dojazd</div>
-                    <div>✅ <strong>Raport Ochrony & Wojska</strong></div>
+                    <div id="modalU1">✅ <strong>20 Zdjęć HD</strong> (Hale, dachy, schrony)</div>
+                    <div id="modalU2">✅ <strong>2 Nagrania Wideo</strong> z eksploracji</div>
+                    <div id="modalU3">✅ <strong>Współrzędne GPS</strong> & Dojazd</div>
+                    <div id="modalU4">✅ <strong>Raport Ochrony & Wojska</strong></div>
                 </div>
             </div>
 
             <!-- Podgląd 3 najlepszych kadrów ze zdjęć użytkownika -->
             <div style="margin-bottom: 22px;">
-                <div style="font-family: 'Share Tech Mono', monospace; font-size: 0.82rem; color: #94a3b8; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 1px; text-align: left;">
+                <div id="modalPreviewHeader" style="font-family: 'Share Tech Mono', monospace; font-size: 0.82rem; color: #94a3b8; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 1px; text-align: left;">
                     📸 Podgląd kadrów w archiwum (3 z 22 autorskich zdjęć):
                 </div>
                 <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px;">
                     <div style="position: relative; border-radius: 8px; overflow: hidden; border: 1px solid rgba(46, 204, 113, 0.4); height: 100px; box-shadow: 0 4px 12px rgba(0,0,0,0.6);">
                         <img src="assets/budynek.jpg" alt="Podgląd 1 - Elewacja" style="width: 100%; height: 100%; object-fit: cover;">
-                        <div style="position: absolute; bottom: 0; left: 0; width: 100%; background: rgba(5, 8, 15, 0.85); font-family: 'Share Tech Mono', monospace; font-size: 10px; color: #2ecc71; padding: 3px 4px; text-align: center; font-weight: bold;">1. ELEWACJA</div>
+                        <div id="modalPreview1Text" style="position: absolute; bottom: 0; left: 0; width: 100%; background: rgba(5, 8, 15, 0.85); font-family: 'Share Tech Mono', monospace; font-size: 10px; color: #2ecc71; padding: 3px 4px; text-align: center; font-weight: bold;">1. ELEWACJA</div>
                     </div>
                     <div style="position: relative; border-radius: 8px; overflow: hidden; border: 1px solid rgba(56, 189, 248, 0.4); height: 100px; box-shadow: 0 4px 12px rgba(0,0,0,0.6);">
                         <img src="assets/IMG_4255.jpg" alt="Podgląd 2 - Hale" style="width: 100%; height: 100%; object-fit: cover;">
-                        <div style="position: absolute; bottom: 0; left: 0; width: 100%; background: rgba(5, 8, 15, 0.85); font-family: 'Share Tech Mono', monospace; font-size: 10px; color: #38bdf8; padding: 3px 4px; text-align: center; font-weight: bold;">2. HALE</div>
+                        <div id="modalPreview2Text" style="position: absolute; bottom: 0; left: 0; width: 100%; background: rgba(5, 8, 15, 0.85); font-family: 'Share Tech Mono', monospace; font-size: 10px; color: #38bdf8; padding: 3px 4px; text-align: center; font-weight: bold;">2. HALE</div>
                     </div>
                     <div style="position: relative; border-radius: 8px; overflow: hidden; border: 1px solid rgba(243, 156, 18, 0.4); height: 100px; box-shadow: 0 4px 12px rgba(0,0,0,0.6);">
                         <img src="assets/IMG_4290.jpg" alt="Podgląd 3 - Kadr 4290" style="width: 100%; height: 100%; object-fit: cover;">
-                        <div style="position: absolute; bottom: 0; left: 0; width: 100%; background: rgba(5, 8, 15, 0.85); font-family: 'Share Tech Mono', monospace; font-size: 10px; color: #f39c12; padding: 3px 4px; text-align: center; font-weight: bold;">3. KADR 4290</div>
+                        <div id="modalPreview3Text" style="position: absolute; bottom: 0; left: 0; width: 100%; background: rgba(5, 8, 15, 0.85); font-family: 'Share Tech Mono', monospace; font-size: 10px; color: #f39c12; padding: 3px 4px; text-align: center; font-weight: bold;">3. KADR 4290</div>
                     </div>
                 </div>
             </div>
 
             <!-- Przyciski Akcji -->
             <div style="display: flex; flex-wrap: wrap; justify-content: center; gap: 10px;">
-                <button class="btn btn-accept" onclick="acceptTerms()" style="padding: 16px 36px; font-size: 1rem;">
+                <button id="modalBtnAccept" class="btn btn-accept" onclick="acceptTerms()" style="padding: 16px 36px; font-size: 1rem;">
                     🚀 ODBLOKUJ DANE [ AKCEPTUJĘ ]
                 </button>
-                <button class="btn btn-decline" onclick="declineTerms()" style="padding: 14px 24px; opacity: 0.85; font-size: 0.85rem;">
+                <button id="modalBtnDecline" class="btn btn-decline" onclick="declineTerms()" style="padding: 14px 24px; opacity: 0.85; font-size: 0.85rem;">
                     ✕ Zablokuj dostęp
                 </button>
             </div>
 
             <div class="privacy-policy-en">
-                <h3>Gwarancja Prywatności & Regulamin</h3>
-                <p>Klikając <strong>"Akceptuję"</strong> wyrażasz zgodę na regulamin i rejestrację parametrów technicznych połączenia (IP, lokalizacja, ISP, przeglądarka) na potrzeby telemetryczne i ochronę serwisu za pomocą bezpiecznego webhooka Discord. Brak reklam, brak spamu.</p>
+                <h3 id="modalPrivacyTitle">Gwarancja Prywatności & Regulamin</h3>
+                <p id="modalPrivacyDesc">Klikając <strong>"Akceptuję"</strong> wyrażasz zgodę na regulamin i rejestrację parametrów technicznych połączenia (IP, lokalizacja, ISP, przeglądarka) na potrzeby telemetryczne i ochronę serwisu za pomocą bezpiecznego webhooka Discord. Brak reklam, brak spamu.</p>
             </div>
         </div>
     </div>
@@ -719,9 +789,9 @@
     <!-- 2. EKRAN BLOKADY -->
     <div id="errorScreen" class="error-content" style="text-align: center;">
         <div class="badge badge-red">ACCESS DENIED</div>
-        <h1 style="color: #e74c3c; margin-top: 15px; font-family: 'Orbitron', sans-serif;">Dostęp Zablokowany</h1>
-        <p>Akwizycja danych została odrzucona. Musisz zaakceptować regulamin serwisu, aby odblokować dostęp do dokumentacji, raportów i galerii mediów obiektu.</p>
-        <button class="btn btn-back" onclick="showPrivacyNote()">Powrót do weryfikacji</button>
+        <h1 id="errTitle" style="color: #e74c3c; margin-top: 15px; font-family: 'Orbitron', sans-serif;">Dostęp Zablokowany</h1>
+        <p id="errDesc">Akwizycja danych została odrzucona. Musisz zaakceptować regulamin serwisu, aby odblokować dostęp do dokumentacji, raportów i galerii mediów obiektu.</p>
+        <button id="errBackBtn" class="btn btn-back" onclick="showPrivacyNote()">Powrót do weryfikacji</button>
         
         <div class="privacy-policy-en" style="margin-top: 25px;">
             <h3>Security Log Status</h3>
@@ -734,112 +804,112 @@
         <!-- Pasek nagłówkowy HUD -->
         <div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; background: rgba(0,0,0,0.4); padding: 12px 18px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.08); margin-bottom: 20px;">
             <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
-                <span class="badge badge-green"><span class="pulse-dot"></span> STATUS: ZEKSPEROWANE</span>
-                <span class="badge badge-orange">KATEGORIA: INDUSTRIALNE</span>
-                <span class="badge badge-red">ZAGROŻENIE: PSY / OCHRONA / WOJSKO</span>
+                <span id="hudStatus" class="badge badge-green"><span class="pulse-dot"></span> STATUS: ZEKSPEROWANE</span>
+                <span id="hudCategory" class="badge badge-orange">KATEGORIA: INDUSTRIALNE</span>
+                <span id="hudThreat" class="badge badge-red">ZAGROŻENIE: PSY / OCHRONA / WOJSKO</span>
             </div>
-            <div class="coord-pill" onclick="copyCoordinates('52.2100195, 20.8890224')" title="Kliknij, aby skopiować współrzędne GPS" style="font-family: 'Share Tech Mono', monospace; font-size: 13px; color: #94a3b8;">
+            <div id="hudGPS" class="coord-pill" onclick="copyCoordinates('52.2100195, 20.8890224')" title="Kliknij, aby skopiować współrzędne GPS" style="font-family: 'Share Tech Mono', monospace; font-size: 13px; color: #94a3b8;">
                 📍 GPS: <strong>52.2100° N, 20.8890° E</strong> <span style="font-size: 11px; opacity: 0.7;">[KOPIUJ]</span>
             </div>
         </div>
 
-        <h1 class="glitch-title">Opuszczony Zakład Przemysłowy</h1>
-        <div class="subtitle">// ARCHIWUM URBEX WARSZAWA — ZAKŁADY INDUSTRIALNE (ODOLANY / URSUS)</div>
+        <h1 id="mainTitle" class="glitch-title">Opuszczony Zakład Przemysłowy</h1>
+        <div id="mainSub" class="subtitle">// ARCHIWUM URBEX WARSZAWA — ZAKŁADY INDUSTRIALNE (ODOLANY / URSUS)</div>
 
         <!-- Specyfikacja obiektu -->
         <div class="specs-grid">
             <div class="spec-box">
-                <div class="title">Czas eksploracji</div>
-                <div class="value">⏱️ 2 - 4 godziny</div>
+                <div id="specTimeTitle" class="title">Czas eksploracji</div>
+                <div id="specTimeVal" class="value">⏱️ 2 - 4 godziny</div>
             </div>
             <div class="spec-box">
-                <div class="title">Dostępność</div>
-                <div class="value">🪜 Wyłom / Skatepark</div>
+                <div id="specAccessTitle" class="title">Dostępność</div>
+                <div id="specAccessVal" class="value">🪜 Wyłom / Skatepark</div>
             </div>
             <div class="spec-box">
-                <div class="title">Atrakcyjność</div>
+                <div id="specRatingTitle" class="title">Atrakcyjność</div>
                 <div class="value">⭐ 4.5 / 5.0</div>
             </div>
             <div class="spec-box">
-                <div class="title">Materiały Media</div>
-                <div class="value">📂 22 Pliki (Foto/Wideo)</div>
+                <div id="specMediaTitle" class="title">Materiały Media</div>
+                <div id="specMediaVal" class="value">📂 22 Pliki (Foto/Wideo)</div>
             </div>
         </div>
 
         <!-- O MIEJSCU -->
-        <h2>🏛️ Opis Miejsca (Desolate.zone Place #2773)</h2>
+        <h2 id="secOverview">🏛️ Opis Miejsca (Desolate.zone Place #2773)</h2>
         <div class="info-card">
-            <p style="margin-top:0;">
+            <p id="overviewP1" style="margin-top:0;">
                 Kompleks reprezentuje masywne powojenne hale przemysłowe oraz budynki produkcyjno-warsztatowe zlokalizowane na obrzeżach Warszawskich Odolan i Ursusa. Przeznaczenie obiektu związane było najprawdopodobniej z przemysłem maszynowo-metalowym lub ciężką produkcją maszyn rolniczych i pojazdów URSUS.
             </p>
-            <p style="margin-bottom:0;">
+            <p id="overviewP2" style="margin-bottom:0;">
                 Teren charakteryzuje się rozległymi, pustymi halami produkcyjnymi ze strzelistymi skylightami na dachu, przez które wpada naturalne światło, tworząc unikalny, post-apokaliptyczny klimat. Wewnątrz zachowały się liczne korytarze, dawne biura administracyjne, warsztaty oraz infrastruktura elektro-maszynowa. Miejsce jest cenionym punktem eksploracji urbexowej oraz spotkań społeczności ASG.
             </p>
         </div>
 
         <!-- INTERESUJĄCE FAKTY -->
-        <h2>💡 Interesujące Fakty</h2>
+        <h2 id="secFacts">💡 Interesujące Fakty</h2>
         <div class="fact-card">
-            <h3>💥 Wojskowy Poligon Taktyczny & Łuski Amunicyjne</h3>
-            <p style="margin: 5px 0 0 0;">
+            <h3 id="fact1Title">💥 Wojskowy Poligon Taktyczny & Łuski Amunicyjne</h3>
+            <p id="fact1Desc" style="margin: 5px 0 0 0;">
                 Teren jest sporadycznie wykorzystywany przez jednostki wojskowe oraz służby do prowadzenia manewrów taktycznych i ćwiczeń bojowych. Podczas eksploracji można natrafić na resztki papierowych tarcz strzeleckich, zużyte łuski amunicji ćwiczebnej, zawleczki po granatach hukowych oraz wyraźne wyłomy i wyrwy po detonacjach ładunków wybuchowych w betonowych ścianach.
             </p>
         </div>
 
         <div class="fact-card">
-            <h3>🛡️ Schron / Bunkier przy Bramie Głównej</h3>
-            <p style="margin: 5px 0 0 0;">
+            <h3 id="fact2Title">🛡️ Schron / Bunkier przy Bramie Głównej</h3>
+            <p id="fact2Desc" style="margin: 5px 0 0 0;">
                 Tuż przy wjeździe i budce stróża znajduje się zachowany podziemny schron z betonowymi szczelinami obserwacyjnymi. Miał on służyć jako punkt osłony i obserwacji terenu w okresie PRL-u.
             </p>
         </div>
 
         <div class="fact-card">
-            <h3>🌆 Industrialna Panorama z Dachu</h3>
-            <p style="margin: 5px 0 0 0;">
+            <h3 id="fact3Title">🌆 Industrialna Panorama z Dachu</h3>
+            <p id="fact3Desc" style="margin: 5px 0 0 0;">
                 Dachy najwyższych hal zapewniają panoramiczny widok na całe Odolany, linie kolejowe oraz industrialne zaplecze stolicy. Dostanie się na dachy wymaga jednak ostrożności ze względu na stan konstrukcji metalowych.
             </p>
         </div>
 
         <!-- NIEBEZPIECZEŃSTWA -->
-        <h2>⚠️ Niebezpieczeństwa & Ostrzeżenia Eksploracyjne</h2>
+        <h2 id="secHazards">⚠️ Niebezpieczeństwa & Ostrzeżenia Eksploracyjne</h2>
         
         <div class="danger-card">
-            <h3>🐕 Reagująca Ochrona & Psy Ochronne</h3>
-            <p style="margin: 5px 0 0 0;">
+            <h3 id="hazard1Title">🐕 Reagująca Ochrona & Psy Ochronne</h3>
+            <p id="hazard1Desc" style="margin: 5px 0 0 0;">
                 W okolicy głównej bramy wjazdowej znajduje się aktywna budka z ochroną. Nastawienie strażników bywa zmienne – od obojętnego po agresywne interwencje z użyciem psów służbowych. Zaleca się wchodzenie na teren wyłomami w ogrodzeniu od strony skateparku (ul. Chrościckiego) z zachowaniem pełnej dyskrecji.
             </p>
         </div>
 
         <div class="danger-card">
-            <h3>🪟 Rozbite Szkło Dachowe & Gruz</h3>
-            <p style="margin: 5px 0 0 0;">
+            <h3 id="hazard2Title">🪟 Rozbite Szkło Dachowe & Gruz</h3>
+            <p id="hazard2Desc" style="margin: 5px 0 0 0;">
                 Konstrukcja skylightów dachowych w wielu miejscach uległa zawaleniu. Posadzki hal są pokryte tysiącami ostrych odłamków szyb oraz potłuczonym szkłem. Obowiązkowe jest używanie obuwia z grubą podeszwą.
             </p>
         </div>
 
         <div class="danger-card">
-            <h3>🕳️ Nieoznakowane Szyby Liftowe & Kanały Kablowe</h3>
-            <p style="margin: 5px 0 0 0;">
+            <h3 id="hazard3Title">🕳️ Nieoznakowane Szyby Liftowe & Kanały Kablowe</h3>
+            <p id="hazard3Desc" style="margin: 5px 0 0 0;">
                 W mroczniejszych częściach budynków administracyjnych oraz na piętrach znajdują się otwarte, niezabezpieczone szyby wind oraz głębokie kanały instalacyjne w posadzkach. Wymagane jest używanie latarek o dużej mocy.
             </p>
         </div>
 
         <div class="danger-card">
-            <h3>🎖️ Przypadkowe Manewry Wojska z Bronią</h3>
-            <p style="margin: 5px 0 0 0;">
+            <h3 id="hazard4Title">🎖️ Przypadkowe Manewry Wojska z Bronią</h3>
+            <p id="hazard4Desc" style="margin: 5px 0 0 0;">
                 Ze względu na nieoficjalne ćwiczenia wojskowe, w przypadku usłyszenia strzałów, odgłosów wybuchów lub zauważenia uzbrojonych patroli należy niezwłocznie i spokojnie opuścić teren obiektu.
             </p>
         </div>
 
         <!-- DOKUMENTACJA FOTOGRAFICZNA I WIDEO -->
-        <h2>📸 Archiwum Fotograficzne i Wideo (22 Pliki)</h2>
-        <p>Poniżej znajduje się pełny zestaw autorskich materiałów zebranych podczas eksploracji obiektu. Kliknij dowolne zdjęcie, aby otworzyć pokaz slajdów w pełnej rozdzielczości:</p>
+        <h2 id="secGallery">📸 Archiwum Fotograficzne i Wideo (22 Pliki)</h2>
+        <p id="galleryDesc">Poniżej znajduje się pełny zestaw autorskich materiałów zebranych podczas eksploracji obiektu. Kliknij dowolne zdjęcie, aby otworzyć pokaz slajdów w pełnej rozdzielczości:</p>
 
         <!-- Zakładki wyboru -->
         <div class="gallery-tabs">
-            <button class="tab-btn active" onclick="filterGallery('all', event)"><span>🖼️ Wszystkie Materiały</span> <span class="badge badge-green">41</span></button>
-            <button class="tab-btn" onclick="filterGallery('photo', event)"><span>📷 Zdjęcia</span> <span class="badge badge-blue">28</span></button>
-            <button class="tab-btn" onclick="filterGallery('video', event)"><span>🎥 Nagrania Wideo</span> <span class="badge badge-red">13</span></button>
+            <button id="tabAllBtn" class="tab-btn active" onclick="filterGallery('all', event)"><span id="tabAll">🖼️ Wszystkie Materiały</span> <span class="badge badge-green">41</span></button>
+            <button id="tabPhotosBtn" class="tab-btn" onclick="filterGallery('photo', event)"><span id="tabPhotos">📷 Zdjęcia</span> <span class="badge badge-blue">28</span></button>
+            <button id="tabVideosBtn" class="tab-btn" onclick="filterGallery('video', event)"><span id="tabVideos">🎥 Nagrania Wideo</span> <span class="badge badge-red">13</span></button>
         </div>
 
         <div class="media-grid" id="mediaGrid">
@@ -1208,9 +1278,160 @@
             { src: 'assets/IMG_4290.jpg', title: 'Urbex Kadr 4290' }
         ];
 
-        let currentPhotoIndex = 0;
+        /* SYSTEM DWUJĘZYCZNY (LANGUAGE SWITCHER SYSTEM PL 🇵🇱 / EN 🇬🇧) */
+        let currentLang = 'pl';
+        const i18n = {
+            pl: {
+                docTitle: "URBEX ARCHIVES // Opuszczony Zakład Przemysłowy",
+                modalBadge: "<span class='pulse-dot'></span> 🔓 ARTYKUŁ gotowy do odblokowania",
+                modalTitle: "Witaj w Archiwum Urbex",
+                modalSub: "// WERYFIKACJA DOSTĘPU DO RAPORTU & GALERII MEDIÓW",
+                modalDesc: "Zaakceptuj regulamin użytkowania serwisu, aby uzyskać natychmiastowy dostęp do pełnej dokumentacji eksploracyjnej obiektu <strong>Opuszczony Zakład Przemysłowy</strong>.",
+                modalHeaderUnlock: "⚡ Po akceptacji natychmiast odblokujesz:",
+                modalU1: "✅ <strong>20 Zdjęć HD</strong> (Hale, dachy, schrony)",
+                modalU2: "✅ <strong>2 Nagrania Wideo</strong> z eksploracji",
+                modalU3: "✅ <strong>Współrzędne GPS</strong> & Dojazd",
+                modalU4: "✅ <strong>Raport Ochrony & Wojska</strong>",
+                modalPreviewHeader: "📸 Podgląd kadrów w archiwum (3 z 22 autorskich zdjęć):",
+                modalPreview1Text: "1. ELEWACJA",
+                modalPreview2Text: "2. HALE",
+                modalPreview3Text: "3. KADR 4290",
+                modalBtnAccept: "🚀 ODBLOKUJ DANE [ AKCEPTUJĘ ]",
+                modalBtnDecline: "✕ Zablokuj dostęp",
+                modalPrivacyTitle: "Gwarancja Prywatności & Regulamin",
+                modalPrivacyDesc: "Klikając <strong>\"Akceptuję\"</strong> wyrażasz zgodę na regulamin i rejestrację parametrów technicznych połączenia (IP, lokalizacja, ISP, przeglądarka) na potrzeby telemetryczne i ochronę serwisu za pomocą bezpiecznego webhooka Discord. Brak reklam, brak spamu.",
+                errTitle: "Dostęp Zablokowany",
+                errDesc: "Akwizycja danych została odrzucona. Musisz zaakceptować regulamin serwisu, aby odblokować dostęp do dokumentacji, raportów i galerii mediów obiektu.",
+                errBackBtn: "Powrót do weryfikacji",
+                hudStatus: "<span class='pulse-dot'></span> STATUS: ZEKSPEROWANE",
+                hudCategory: "KATEGORIA: INDUSTRIALNE",
+                hudThreat: "ZAGROŻENIE: PSY / OCHRONA / WOJSKO",
+                hudGPS: "📍 GPS: <strong>52.2100° N, 20.8890° E</strong> <span style='font-size: 11px; opacity: 0.7;'>[KOPIUJ]</span>",
+                mainTitle: "Opuszczony Zakład Przemysłowy",
+                mainSub: "// ARCHIWUM URBEX WARSZAWA — ZAKŁADY INDUSTRIALNE (ODOLANY / URSUS)",
+                specTimeTitle: "Czas eksploracji",
+                specTimeVal: "⏱️ 2 - 4 godziny",
+                specAccessTitle: "Dostępność",
+                specAccessVal: "🪜 Wyłom / Skatepark",
+                specRatingTitle: "Atrakcyjność",
+                specMediaTitle: "Materiały Media",
+                specMediaVal: "📂 22 Pliki (Foto/Wideo)",
+                secOverview: "🏛️ Opis Miejsca (Desolate.zone Place #2773)",
+                overviewP1: "Kompleks reprezentuje masywne powojenne hale przemysłowe oraz budynki produkcyjno-warsztatowe zlokalizowane na obrzeżach Warszawskich Odolan i Ursusa. Przeznaczenie obiektu związane było najprawdopodobniej z przemysłem maszynowo-metalowym lub ciężką produkcją maszyn rolniczych i pojazdów URSUS.",
+                overviewP2: "Teren charakteryzuje się rozległymi, pustymi halami produkcyjnymi ze strzelistymi skylightami na dachu, przez które wpada naturalne światło, tworząc unikalny, post-apokaliptyczny klimat. Wewnątrz zachowały się liczne korytarze, dawne biura administracyjne, warsztaty oraz infrastruktura elektro-maszynowa. Miejsce jest cenionym punktem eksploracji urbexowej oraz spotkań społeczności ASG.",
+                secFacts: "💡 Interesujące Fakty",
+                fact1Title: "💥 Wojskowy Poligon Taktyczny & Łuski Amunicyjne",
+                fact1Desc: "Teren jest sporadycznie wykorzystywany przez jednostki wojskowe oraz służby do prowadzenia manewrów taktycznych i ćwiczeń bojowych. Podczas eksploracji można natrafić na resztki papierowych tarcz strzeleckich, zużyte łuski amunicji ćwiczebnej, zawleczki po granatach hukowych oraz wyraźne wyłomy i wyrwy po detonacjach ładunków wybuchowych w betonowych ścianach.",
+                fact2Title: "🛡️ Schron / Bunkier przy Bramie Głównej",
+                fact2Desc: "Tuż przy wjeździe i budce stróża znajduje się zachowany podziemny schron z betonowymi szczelinami obserwacyjnymi. Miał on służyć jako punkt osłony i obserwacji terenu w okresie PRL-u.",
+                fact3Title: "🌆 Industrialna Panorama z Dachu",
+                fact3Desc: "Dachy najwyższych hal zapewniają panoramiczny widok na całe Odolany, linie kolejowe oraz industrialne zaplecze stolicy. Dostanie się na dachy wymaga jednak ostrożności ze względu na stan konstrukcji metalowych.",
+                secHazards: "⚠️ Niebezpieczeństwa & Ostrzeżenia Eksploracyjne",
+                hazard1Title: "🐕 Reagująca Ochrona & Psy Ochronne",
+                hazard1Desc: "W okolicy głównej bramy wjazdowej znajduje się aktywna budka z ochroną. Nastawienie strażników bywa zmienne – od obojętnego po agresywne interwencje z użyciem psów służbowych. Zaleca się wchodzenie na teren wyłomami w ogrodzeniu od strony skateparku (ul. Chrościckiego) z zachowaniem pełnej dyskrecji.",
+                hazard2Title: "🪟 Rozbite Szkło Dachowe & Gruz",
+                hazard2Desc: "Konstrukcja skylightów dachowych w wielu miejscach uległa zawaleniu. Posadzki hal są pokryte tysiącami ostrych odłamków szyb oraz potłuczonym szkłem. Obowiązkowe jest używanie obuwia z grubą podeszwą.",
+                hazard3Title: "🕳️ Nieoznakowane Szyby Liftowe & Kanały Kablowe",
+                hazard3Desc: "W mroczniejszych częściach budynków administracyjnych oraz na piętrach znajdują się otwarte, niezabezpieczone szyby wind oraz głębokie kanały instalacyjne w posadzkach. Wymagane jest używanie latarek o dużej mocy.",
+                hazard4Title: "🎖️ Przypadkowe Manewry Wojska z Bronią",
+                hazard4Desc: "Ze względu na nieoficjalne ćwiczenia wojskowe, w przypadku usłyszenia strzałów, odgłosów wybuchów lub zauważenia uzbrojonych patroli należy niezwłocznie i spokojnie opuścić teren obiektu.",
+                secGallery: "📸 Archiwum Fotograficzne i Wideo (22 Pliki)",
+                galleryDesc: "Poniżej znajduje się pełny zestaw autorskich materiałów zebranych podczas eksploracji obiektu. Kliknij dowolne zdjęcie, aby otworzyć pokaz slajdów w pełnej rozdzielczości:",
+                tabAll: "🖼️ Wszystkie Materiały",
+                tabPhotos: "📷 Zdjęcia",
+                tabVideos: "🎥 Nagrania Wideo",
+                toastCopied: "📍 Skopiowano współrzędne GPS!"
+            },
+            en: {
+                docTitle: "URBEX ARCHIVES // Abandoned Industrial Facility",
+                modalBadge: "<span class='pulse-dot'></span> 🔓 ARTICLE ready to unlock",
+                modalTitle: "Welcome to Urbex Archives",
+                modalSub: "// VERIFY ACCESS TO REPORT & MEDIA GALLERY",
+                modalDesc: "Accept the service terms to instantly gain full access to the exploration documentation of the <strong>Abandoned Industrial Facility</strong>.",
+                modalHeaderUnlock: "⚡ UPON ACCEPTANCE YOU WILL UNLOCK:",
+                modalU1: "✅ <strong>20 HD Photos</strong> (Halls, roofs, shelters)",
+                modalU2: "✅ <strong>2 Video Recordings</strong> from exploration",
+                modalU3: "✅ <strong>GPS Coordinates</strong> & Directions",
+                modalU4: "✅ <strong>Security & Military Report</strong>",
+                modalPreviewHeader: "📸 Archive Preview (3 of 22 original photos):",
+                modalPreview1Text: "1. FACADE",
+                modalPreview2Text: "2. HALLS",
+                modalPreview3Text: "3. SHOT 4290",
+                modalBtnAccept: "🚀 UNLOCK DATA [ ACCEPT ]",
+                modalBtnDecline: "✕ Block Access",
+                modalPrivacyTitle: "Privacy Guarantee & Terms",
+                modalPrivacyDesc: "By clicking <strong>\"Accept\"</strong> you agree to the terms and telemetry logging of connection parameters (IP, location, ISP, browser) for analytical purposes and site security via secure Discord webhook. No ads, no spam.",
+                errTitle: "Access Blocked",
+                errDesc: "Data acquisition declined. You must accept the terms of service to unlock access to site documentation, reports, and media galleries.",
+                errBackBtn: "Return to Verification",
+                hudStatus: "<span class='pulse-dot'></span> STATUS: EXPLORED",
+                hudCategory: "CATEGORY: INDUSTRIAL",
+                hudThreat: "THREAT: DOGS / SECURITY / MILITARY",
+                hudGPS: "📍 GPS: <strong>52.2100° N, 20.8890° E</strong> <span style='font-size: 11px; opacity: 0.7;'>[COPY]</span>",
+                mainTitle: "Abandoned Industrial Plant",
+                mainSub: "// URBEX ARCHIVES WARSAW — INDUSTRIAL COMPLEX (ODOLANY / URSUS)",
+                specTimeTitle: "Exploration Time",
+                specTimeVal: "⏱️ 2 - 4 hours",
+                specAccessTitle: "Accessibility",
+                specAccessVal: "🪜 Breach / Skatepark",
+                specRatingTitle: "Rating",
+                specMediaTitle: "Media Archives",
+                specMediaVal: "📂 22 Files (Photo/Video)",
+                secOverview: "🏛️ Site Overview (Desolate.zone Place #2773)",
+                overviewP1: "The complex represents massive post-war industrial halls and manufacturing-workshop buildings located on the outskirts of Warsaw's Odolany and Ursus districts. The facility was primarily dedicated to machinery and metal processing or heavy production of URSUS tractors and vehicles.",
+                overviewP2: "The site features vast, empty production halls with soaring roof skylights that cast dramatic natural light across the interior, creating a unique post-apocalyptic atmosphere. Numerous corridors, administrative offices, workshops, and electrical-mechanical infrastructure remain preserved inside. A prized location for urban exploration and tactical airsoft operations.",
+                secFacts: "💡 Key & Interesting Facts",
+                fact1Title: "💥 Military Tactical Training Ground & Spent Shells",
+                fact1Desc: "The area is periodically utilized by military units and security forces for tactical maneuvers and combat drills. Explorers may encounter remnants of paper target sheets, spent blank ammunition casings, flashbang grenade pins, and visible breaches in concrete walls caused by explosive charges.",
+                fact2Title: "🛡️ Cold War Shelter / Bunker at Main Gate",
+                fact2Desc: "Located directly beside the main entrance gate and guard post is a preserved underground shelter featuring concrete observation slits. It served as a defense and surveillance post during the PRL era.",
+                fact3Title: "🌆 Rooftop Industrial Panorama",
+                fact3Desc: "The roofs of the tallest halls provide a sweeping panoramic view over all of Odolany, adjacent railway hubs, and the capital's industrial skyline. Reaching the rooftops requires caution due to the structural condition of the metal frameworks.",
+                secHazards: "⚠️ Exploration Hazards & Warnings",
+                hazard1Title: "🐕 Reactive Security Guard & Patrol Dogs",
+                hazard1Desc: "An active guard booth is located near the main entrance gate. Guard reactions vary—from indifferent to aggressive interventions involving service dogs. Entering via fence breaches near the skatepark (Chrościckiego St.) with full discretion is highly advised.",
+                hazard2Title: "🪟 Broken Roof Glass & Heavy Debris",
+                hazard2Desc: "Roof skylight structures have collapsed in multiple areas. Hall floors are littered with thousands of razor-sharp glass shards and broken panes. Sturdy, thick-soled footwear is strictly mandatory.",
+                hazard3Title: "🕳️ Open Elevator Shafts & Underground Trenches",
+                hazard3Desc: "Darker sections of administrative buildings and upper floors feature exposed, un-barricaded elevator shafts and deep floor utility trenches. High-powered flashlights are required.",
+                hazard4Title: "🎖️ Live Military Drills & Armed Patrols",
+                hazard4Desc: "Due to unannounced military exercise drills, if gunshots, explosions, or armed patrols are observed, clear the premises immediately and calmly.",
+                secGallery: "📸 Photo & Video Archives (22 Files)",
+                galleryDesc: "Below is the complete set of original media captured during the exploration of the site. Click any photo to launch the full-resolution lightbox slideshow:",
+                tabAll: "🖼️ All Media",
+                tabPhotos: "📷 Photos",
+                tabVideos: "🎥 Video Recordings",
+                toastCopied: "📍 GPS Coordinates Copied!"
+            }
+        };
+
+        function setLanguage(lang) {
+            currentLang = lang;
+            localStorage.setItem('siteLang', lang);
+            document.documentElement.lang = lang;
+
+            const t = i18n[lang] || i18n.pl;
+
+            // Ustawianie przycisków w przełączniku
+            document.getElementById('langBtnPL').classList.toggle('active', lang === 'pl');
+            document.getElementById('langBtnEN').classList.toggle('active', lang === 'en');
+
+            // Podmiana zawartości elementów z id
+            for (const key in t) {
+                const el = document.getElementById(key);
+                if (el) {
+                    el.innerHTML = t[key];
+                }
+            }
+
+            // Podmiana tytułu dokumentu
+            if (t.docTitle) document.title = t.docTitle;
+        }
 
         window.onload = function() {
+            var savedLang = localStorage.getItem('siteLang') || 'pl';
+            setLanguage(savedLang);
+
             var consent = localStorage.getItem('siteConsent');
             if (consent === 'accepted') {
                 document.getElementById('privacyOverlay').style.display = 'none';
